@@ -22,7 +22,8 @@ public class ProductController {
     }
 
     @GetMapping("/buscar")
-    public List<Product> buscar(@RequestParam String name) {
+    public List<Product> buscar(@RequestParam("name") String name) {
         return productService.findByName(name);
     }
+
 }
