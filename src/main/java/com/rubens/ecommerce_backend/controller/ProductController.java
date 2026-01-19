@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.rubens.ecommerce_backend.service.ProductService;
 
 import java.util.List;
-import com.rubens.ecommerce_backend.model.Product;
+import com.rubens.ecommerce_backend.dto.ProductDTO;
+
 
 
 @RestController
@@ -22,7 +23,7 @@ public class ProductController {
     }
 
     @GetMapping("/buscar")
-    public List<Product> buscar(@RequestParam("name") String name) {
+    public List<ProductDTO> buscar(@RequestParam("name") String name) {
         return productService.findByName(name);
     }
 

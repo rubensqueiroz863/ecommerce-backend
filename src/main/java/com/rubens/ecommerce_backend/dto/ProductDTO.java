@@ -1,24 +1,13 @@
-package com.rubens.ecommerce_backend.model;
+package com.rubens.ecommerce_backend.dto;
 
-import jakarta.persistence.*;
+public class ProductDTO {
 
-@Entity
-@Table(name = "products")
-public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
     private Double price;
     private String photo;
-
-    @ManyToOne
-    @JoinColumn(name = "subcategory_id", nullable = false)
-    private SubCategory subCategory;
+    private String category;
+    private String subCategory;
 
     public Long getId() {
         return id;
@@ -52,11 +41,19 @@ public class Product {
         this.photo = photo;
     }
 
-    public SubCategory getSubCategory() {
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getSubCategory() {
         return subCategory;
     }
 
-    public void setSubCategory(SubCategory subCategory) {
+    public void setSubCategory(String subCategory) {
         this.subCategory = subCategory;
     }
 }
