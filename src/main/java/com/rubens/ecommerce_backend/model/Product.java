@@ -12,6 +12,7 @@ public class Product {
 
     private String name;
     private Double price;
+    private String photo;
 
     public Long getId() {
         return id;
@@ -35,5 +36,13 @@ public class Product {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 }
