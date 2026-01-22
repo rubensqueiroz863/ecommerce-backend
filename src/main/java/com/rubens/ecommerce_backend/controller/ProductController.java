@@ -1,16 +1,11 @@
 package com.rubens.ecommerce_backend.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.rubens.ecommerce_backend.service.ProductService;
-
 import java.util.List;
+
+import org.springframework.web.bind.annotation.*;
+
 import com.rubens.ecommerce_backend.dto.ProductDTO;
-
-
+import com.rubens.ecommerce_backend.service.ProductService;
 
 @RestController
 @RequestMapping("/produtos")
@@ -22,9 +17,15 @@ public class ProductController {
         this.productService = productService;
     }
 
+    // 🔍 Buscar produtos por nome
     @GetMapping("/buscar")
-    public List<ProductDTO> buscar(@RequestParam("name") String name) {
+    public List<ProductDTO> buscarPorNome(@RequestParam(required = false) String name) {
         return productService.findByName(name);
     }
 
+    // 📦 Buscar produtos por subcategoria (slug)
+    @GetMapping("/subcategoria/{slug}")
+    public List<ProductDTO> buscarPorSubCategoria(@PathVariable String slug) {
+        return productService.findBySubCategorySlug(slug);
+    }
 }

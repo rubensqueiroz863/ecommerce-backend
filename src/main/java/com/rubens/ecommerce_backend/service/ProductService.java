@@ -28,6 +28,13 @@ public class ProductService {
             .toList();
     }
 
+    public List<ProductDTO> findBySubCategorySlug(String slug) {
+        return productRepository.findBySubCategory_Slug(slug)
+            .stream()
+            .map(this::toDTO)
+            .toList();
+    }
+
     private ProductDTO toDTO(Product product) {
         ProductDTO dto = new ProductDTO();
 
