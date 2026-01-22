@@ -8,5 +8,8 @@ import com.rubens.ecommerce_backend.model.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByNameContainingIgnoreCase(String name);
+    
     List<Product> findBySubCategory_Slug(String slug);
+
+    List<Product> findBySubCategory_Category_Slug(String slug);
 }

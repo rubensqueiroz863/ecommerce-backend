@@ -28,4 +28,10 @@ public class ProductController {
     public List<ProductDTO> buscarPorSubCategoria(@PathVariable String slug) {
         return productService.findBySubCategorySlug(slug);
     }
+
+    // 🆕 categoria principal
+    @GetMapping("/categoria/{slug}")
+    public List<ProductDTO> buscarPorCategoria(@PathVariable String slug) {
+        return productService.findByCategorySlug(slug);
+    }   
 }
