@@ -28,6 +28,7 @@ public class SubCategoryService {
         SubCategoryDTO dto = new SubCategoryDTO();
         dto.setId(subCategory.getId());
         dto.setName(subCategory.getName());
+        dto.setSlug(subCategory.getSlug());
         return dto;
     }
 }
