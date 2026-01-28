@@ -67,6 +67,14 @@ public class ProductService {
         return toPageResponse(result);
     }
 
+    public ProductDTO findById(int id) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() ->
+                new RuntimeException("Produto não encontrado")
+            );
+        return toDTO(product);
+    }
+
     private PageResponse<ProductDTO> toPageResponse(Page<Product> page) {
         return new PageResponse<>(
             page.getContent()
