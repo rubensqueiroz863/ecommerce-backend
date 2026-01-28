@@ -45,4 +45,9 @@ public class ProductController {
     ) {
         return productService.findByCategorySlug(slug, page, size);
     }
+
+    @GetMapping("/{id}")
+    public ProductDTO buscarPorId(@PathVariable int id) {
+        return productService.findById(id);
+    }
 }
