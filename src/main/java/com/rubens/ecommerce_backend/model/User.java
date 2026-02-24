@@ -8,14 +8,14 @@ import lombok.Data;
 @Entity
 @Table(name = "users")
 public class User {
-  @Id
-  @Column
-  private String id = UUID.randomUUID().toString();
+    @Id
+    @Column
+    private String id = UUID.randomUUID().toString();
 
-  @Column(unique = true, nullable = false)
-  private String email;
+    @Column(unique = true, nullable = false)
+    private String email;
 
-  private String password;
+    private String password;
 
-  private String name;
+    private String name;
 }

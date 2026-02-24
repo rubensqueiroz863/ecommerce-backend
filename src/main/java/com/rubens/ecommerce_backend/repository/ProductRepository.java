@@ -8,7 +8,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, String> {
 
     Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
@@ -16,5 +16,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findBySubCategory_Category_Slug(String slug, Pageable pageable);
 
-    Optional<Product> findById(int id);
+    Optional<Product> findById(String id);
 }

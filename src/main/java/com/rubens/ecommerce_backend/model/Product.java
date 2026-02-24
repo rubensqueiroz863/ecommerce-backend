@@ -1,5 +1,6 @@
 package com.rubens.ecommerce_backend.model;
 
+import java.util.UUID;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -9,8 +10,8 @@ import lombok.Data;
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column
+    private String id = UUID.randomUUID().toString();
 
     @Column(nullable = false)
     private String name;

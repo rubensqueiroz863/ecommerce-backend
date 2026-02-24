@@ -47,7 +47,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductDTO buscarPorId(@PathVariable int id) {
+    public ProductDTO buscarPorId(@PathVariable String id) {
         return productService.findById(id);
     }
 }
