@@ -35,7 +35,7 @@ public class AuthController {
         String token = jwtService.generateToken(user);
 
         return ResponseEntity.ok(
-                new AuthResponse(token, user.getEmail(), user.getName())
+                new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
         );
     }
 
@@ -48,7 +48,7 @@ public class AuthController {
             String token = jwtService.generateToken(user); // ou use o User salvo do repositório
 
             return ResponseEntity.ok(
-                    new AuthResponse(token, savedUserResponse.email(), savedUserResponse.name())
+                    new AuthResponse(token, "", savedUserResponse.email(), savedUserResponse.name())
             );
 
         } catch (RuntimeException e) {
@@ -70,7 +70,7 @@ public class AuthController {
 
         // Retornar token + contaId
         return ResponseEntity.ok(
-                new AuthResponse(token, user.getEmail(), user.getName())
+                new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
         );
     }
 
