@@ -1,11 +1,15 @@
 package com.rubens.ecommerce_backend.service;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.ClickEventDTO;
+import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
 import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.User;
@@ -39,5 +43,20 @@ public class ClickEventService {
             savedEvent.getUser(),
             savedEvent.getProduct()
         );
+    }
+
+    public List<MostClickedProductDTO> getMostClickedProductsByUser(String userId, int limit) {
+
+        Pageable pageable = PageRequest.of(0, limit);
+
+        List<Object[]> results = clickEventRepository
+                .findMostClickedProductsByUser(userId, pageable);
+
+        return results.stream()
+                .map(r -> new MostClickedProductDTO(
+                        (Product) r[0],
+                        ((Long) r[1])
+                ))
+                .toList();
     }
 }
