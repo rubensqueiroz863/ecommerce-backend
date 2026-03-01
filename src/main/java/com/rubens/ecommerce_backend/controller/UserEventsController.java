@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rubens.ecommerce_backend.dto.ClickEventDTO;
 import com.rubens.ecommerce_backend.dto.ClickRequestDTO;
+import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
 import com.rubens.ecommerce_backend.service.ClickEventService;
-import org.springframework.security.core.Authentication;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +33,11 @@ public class UserEventsController {
             request.productId(),
             request.userEmail()
         );
+    }
+
+    @GetMapping("/all-clicks/monthly")
+    public List<ClicksPerMonthDTO> getClicksPerMonthCurrentYear() {
+        return clickEventService.getClicksPerMonthCurrentYear();
     }
 
     @GetMapping("/analytics/users/{userId}/most-clicked")

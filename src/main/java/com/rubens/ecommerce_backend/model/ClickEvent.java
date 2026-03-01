@@ -1,5 +1,6 @@
 package com.rubens.ecommerce_backend.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,9 @@ public class ClickEvent {
     @Id
     @Column
     private String id = UUID.randomUUID().toString();
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne
     private User user;

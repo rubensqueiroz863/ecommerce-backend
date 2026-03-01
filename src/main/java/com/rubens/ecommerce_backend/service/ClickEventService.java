@@ -1,5 +1,7 @@
 package com.rubens.ecommerce_backend.service;
 
+import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.ClickEventDTO;
+import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
 import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.Product;
@@ -55,6 +58,24 @@ public class ClickEventService {
         return results.stream()
                 .map(r -> new MostClickedProductDTO(
                         (Product) r[0],
+                        ((Long) r[1])
+                ))
+                .toList();
+    }
+
+    public List<ClicksPerMonthDTO> getClicksPerMonthCurrentYear() {
+
+        Year year = Year.now();
+
+        LocalDateTime start = year.atDay(1).atStartOfDay();
+        LocalDateTime end = year.plusYears(1).atDay(1).atStartOfDay();
+
+        List<Object[]> results =
+                clickEventRepository.countClicksPerMonth(start, end);
+
+        return results.stream()
+                .map(r -> new ClicksPerMonthDTO(
+                        ((Integer) r[0]),
                         ((Long) r[1])
                 ))
                 .toList();
