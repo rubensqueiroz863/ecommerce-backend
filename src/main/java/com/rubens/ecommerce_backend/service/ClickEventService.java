@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.ClickEventDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
+import com.rubens.ecommerce_backend.dto.ClicksPerProductPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
 import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.Product;
@@ -79,5 +80,16 @@ public class ClickEventService {
                         ((Long) r[1])
                 ))
                 .toList();
+    }
+
+    public List<ClicksPerProductPerMonthDTO> getClicksPerProductPerMonthCurrentYear() {
+
+        Year year = Year.now();
+
+        LocalDateTime start = year.atDay(1).atStartOfDay();
+        LocalDateTime end = year.plusYears(1).atDay(1).atStartOfDay();
+
+        return clickEventRepository
+                .countClicksPerProductPerMonth(start, end);
     }
 }
