@@ -2,6 +2,7 @@ package com.rubens.ecommerce_backend.service;
 
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,9 @@ import com.rubens.ecommerce_backend.dto.ClickEventDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerProductPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
+import com.rubens.ecommerce_backend.dto.ProductRecommendationDTO;
+import com.rubens.ecommerce_backend.dto.ProductRecommendationGroupDTO;
+import com.rubens.ecommerce_backend.dto.UserRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.User;
@@ -91,5 +95,39 @@ public class ClickEventService {
 
         return clickEventRepository
                 .countClicksPerProductPerMonth(start, end);
+    }
+
+    public List<ProductRecommendationGroupDTO> getAllRecommendations() {
+        List<Product> allProducts = productRepository.findAll();
+
+        List<ProductRecommendationGroupDTO> allRecommendations = new ArrayList<>();
+
+        for (Product p : allProducts) {
+            List<ProductRecommendationDTO> related = clickEventRepository.findTopRelatedProducts(p.getId());
+
+            ProductRecommendationGroupDTO group = new ProductRecommendationGroupDTO(
+                p.getName(),
+                related
+            );
+
+            allRecommendations.add(group);
+        }
+
+        return allRecommendations;
+    }
+
+    public UserRecommendationGroupDTO getRecommendationsForUser(String userId) {
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<ProductRecommendationDTO> recommended =
+            clickEventRepository.findRecommendedProductsForUser(userId);
+
+        return new UserRecommendationGroupDTO(
+            user.getId(),
+            user.getName(),
+            recommended
+        );
     }
 }

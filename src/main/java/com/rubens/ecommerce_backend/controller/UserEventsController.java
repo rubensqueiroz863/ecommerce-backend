@@ -9,6 +9,9 @@ import com.rubens.ecommerce_backend.dto.ClickRequestDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerProductPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
+import com.rubens.ecommerce_backend.dto.ProductRecommendationDTO;
+import com.rubens.ecommerce_backend.dto.ProductRecommendationGroupDTO;
+import com.rubens.ecommerce_backend.dto.UserRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.service.ClickEventService;
 
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,11 @@ public class UserEventsController {
         return clickEventService.getClicksPerProductPerMonthCurrentYear();
     }
 
+    @GetMapping("/recommendations")
+    public List<ProductRecommendationGroupDTO> getRecommendationsByClick() {
+        return clickEventService.getAllRecommendations();
+    }
+
     @GetMapping("/analytics/users/{userId}/most-clicked")
     public List<MostClickedProductDTO> getMostClickedProductsByUser(
             @PathVariable String userId,
@@ -53,5 +61,11 @@ public class UserEventsController {
 
         return clickEventService.getMostClickedProductsByUser(userId, limit);
     }
-    
+
+    @GetMapping("/user/recommendations/{userId}")
+    public UserRecommendationGroupDTO getRecommendationsForUser(
+        @PathVariable String userId
+    ) {
+        return clickEventService.getRecommendationsForUser(userId);
+    }
 }

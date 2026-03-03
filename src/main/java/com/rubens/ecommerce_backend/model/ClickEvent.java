@@ -9,9 +9,13 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
+@Table(
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id"})
+)
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClickEvent {
+
     @Id
     @Column
     private String id = UUID.randomUUID().toString();
@@ -20,9 +24,11 @@ public class ClickEvent {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     public ClickEvent(User user, Product product) {
