@@ -57,6 +57,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
         SELECT new com.rubens.ecommerce_backend.dto.ProductRecommendationDTO(
             c2.product.id,
             c2.product.name,
+            c2.product.price,
             COUNT(DISTINCT c1.user.id)
         )
         FROM ClickEvent c1
@@ -64,7 +65,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
             ON c1.user = c2.user
         WHERE c1.product.id = :baseProductId
         AND c2.product.id <> :baseProductId
-        GROUP BY c2.product.id, c2.product.name
+        GROUP BY c2.product.id, c2.product.name, c2.product.price
         ORDER BY COUNT(DISTINCT c1.user.id) DESC
     """)
     List<ProductRecommendationDTO> findTopRelatedProducts(
@@ -75,6 +76,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
         SELECT new com.rubens.ecommerce_backend.dto.ProductRecommendationDTO(
             c2.product.id,
             c2.product.name,
+            c2.product.price,
             COUNT(DISTINCT c2.user.id)
         )
         FROM ClickEvent c1
@@ -89,7 +91,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
                 FROM ClickEvent c3
                 WHERE c3.user.id = :userId
             )
-        GROUP BY c2.product.id, c2.product.name
+        GROUP BY c2.product.id, c2.product.name, c2.product.price
         ORDER BY COUNT(DISTINCT c2.user.id) DESC
     """)
     List<ProductRecommendationDTO> findRecommendedProductsForUser(
