@@ -3,6 +3,7 @@ package com.rubens.ecommerce_backend.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rubens.ecommerce_backend.dto.LastSearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchRequestDTO;
 import com.rubens.ecommerce_backend.model.SearchHistory;
@@ -36,9 +37,7 @@ public class SearchHistoryController  {
     }
 
     @GetMapping("/last/{userId}")
-    public List<SearchHistory> getLastSearches(@PathVariable String userId) {
+    public List<LastSearchHistoryDTO> getLastSearches(@PathVariable String userId) {
         return searchHistoryService.getLastSearches(userId);
     }
-    
-    
 }

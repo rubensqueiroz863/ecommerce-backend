@@ -1,14 +1,13 @@
 package com.rubens.ecommerce_backend.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.rubens.ecommerce_backend.dto.ClickEventDTO;
+import com.rubens.ecommerce_backend.dto.LastSearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchHistoryDTO;
-import com.rubens.ecommerce_backend.dto.SearchRequestDTO;
-import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.SearchHistory;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.repository.SearchHistoryRepository;
@@ -25,9 +24,12 @@ public class SearchHistoryService {
         this.userRepository = userRepository;
     }
 
-    public List<SearchHistory> getLastSearches(String userId) {
+    public List<LastSearchHistoryDTO> getLastSearches(String userId) {
         return searchHistoryRepository
-                .findTop5ByUserIdOrderByCreatedAtDesc(userId);
+                .findTop5ByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(s -> new LastSearchHistoryDTO(s.getQuery()))
+                .toList();
     }
 
     public SearchHistoryDTO registerSearch(String query, String email) {
@@ -35,12 +37,20 @@ public class SearchHistoryService {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
 
-        SearchHistory search = new SearchHistory(user, query);
+        SearchHistory search = searchHistoryRepository
+            .findByUserIdAndQuery(user.getId(), query)
+            .orElse(null);
 
-        SearchHistory savedSearch = searchHistoryRepository.save(search);
+        if (search != null) {
+            search.setCreatedAt(LocalDateTime.now());
+        } else {
+            search = new SearchHistory(user, query);
+        }
+
+        searchHistoryRepository.save(search);
 
         return new SearchHistoryDTO(
-            savedSearch.getId(),
+            search.getId(),
             user.getId()
         );
     }
