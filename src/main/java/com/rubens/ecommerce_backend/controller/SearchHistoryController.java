@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.rubens.ecommerce_backend.dto.LastSearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchRequestDTO;
-import com.rubens.ecommerce_backend.model.SearchHistory;
 import com.rubens.ecommerce_backend.service.SearchHistoryService;
 
 import org.springframework.web.bind.annotation.RequestBody;

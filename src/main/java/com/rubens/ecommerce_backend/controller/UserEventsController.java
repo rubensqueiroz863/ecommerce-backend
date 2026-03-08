@@ -9,7 +9,6 @@ import com.rubens.ecommerce_backend.dto.ClickRequestDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.ClicksPerProductPerMonthDTO;
 import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
-import com.rubens.ecommerce_backend.dto.ProductRecommendationDTO;
 import com.rubens.ecommerce_backend.dto.ProductRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.dto.UserRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.service.ClickEventService;

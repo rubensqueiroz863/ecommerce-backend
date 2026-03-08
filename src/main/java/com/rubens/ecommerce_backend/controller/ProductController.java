@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.ProductDTO;
+import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.service.ProductService;
 
 @RestController
@@ -16,7 +17,7 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // 🔍 Buscar produtos por nome
+    // Buscar produtos por nome
     @GetMapping("/buscar")
     public PageResponse<ProductDTO> buscarPorNome(
         @RequestParam(required = false) String name,
@@ -26,7 +27,7 @@ public class ProductController {
         return productService.findByName(name, page, size);
     }
 
-    // 📦 Buscar produtos por subcategoria (slug)
+    // Buscar produtos por subcategoria (slug)
     @GetMapping("/subcategoria/{slug}")
     public PageResponse<ProductDTO> buscarPorSubCategoria(
         @PathVariable String slug,
@@ -36,7 +37,7 @@ public class ProductController {
         return productService.findBySubCategorySlug(slug, page, size);
     }
 
-    // 🆕 Buscar produtos por categoria principal
+    // Buscar produtos por categoria principal
     @GetMapping("/categoria/{slug}")
     public PageResponse<ProductDTO> buscarPorCategoria(
         @PathVariable String slug,
@@ -49,5 +50,13 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductDTO buscarPorId(@PathVariable String id) {
         return productService.findById(id);
+    }
+
+    @PatchMapping("/edit/{id}")
+    public ProductDTO atualizarProduto(
+        @PathVariable String id,
+        @RequestBody ProductRequestDTO dto
+    ) {
+        return productService.updateProduct(id, dto);
     }
 }
