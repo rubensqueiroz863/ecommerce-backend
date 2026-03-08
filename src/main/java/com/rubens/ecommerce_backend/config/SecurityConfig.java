@@ -42,6 +42,7 @@ public class SecurityConfig {
                 "produtos/**",
                 "subcategories/**",
                 "/events/**",
+                "/ws/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/swagger-ui.html"
@@ -70,7 +71,7 @@ public class SecurityConfig {
           "https://ecommerce-git-main-rubens-projects-1b4c900a.vercel.app",
           "https://ecommerce-610ozrgel-rubens-projects-1b4c900a.vercel.app"
       ));
-      configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+      configuration.setAllowedMethods(List.of("GET","POST","PATCH","PUT","DELETE","OPTIONS"));
       configuration.setAllowCredentials(true);
 
       // ✅ Importante: Authorization precisa estar aqui
