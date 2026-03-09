@@ -97,4 +97,8 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
     List<ProductRecommendationDTO> findRecommendedProductsForUser(
         @Param("userId") String userId
     );
+
+    void deleteByProductId(String id);
+
+    void deleteByUserId(String id);
 }

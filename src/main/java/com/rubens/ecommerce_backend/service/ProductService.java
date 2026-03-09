@@ -9,9 +9,11 @@ import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.SubCategory;
+import com.rubens.ecommerce_backend.repository.ClickEventRepository;
 import com.rubens.ecommerce_backend.repository.ProductRepository;
 import com.rubens.ecommerce_backend.repository.SubCategoryRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -23,7 +25,8 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
-
+    private final ClickEventRepository clickEventRepository;
+    
     public ProductRequestDTO registerProduct(
             String name,
             Double price,
@@ -133,6 +136,17 @@ public class ProductService {
         Product updatedProduct = productRepository.save(product);
 
         return toDTO(updatedProduct);
+    }
+
+    @Transactional
+    public void deleteProduct(String id) {
+        // Remove eventos que referenciam o produto
+        clickEventRepository.deleteByProductId(id);
+
+        // Agora deleta o produto
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        productRepository.delete(product);
     }
 
     private PageResponse<ProductDTO> toPageResponse(Page<Product> page) {

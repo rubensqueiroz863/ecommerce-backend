@@ -43,6 +43,7 @@ public class SecurityConfig {
                 "subcategories/**",
                 "/events/**",
                 "/ws/**",
+                "/user/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/swagger-ui.html"
