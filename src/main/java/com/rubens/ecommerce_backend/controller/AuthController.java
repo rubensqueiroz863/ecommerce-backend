@@ -25,6 +25,9 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
+    // ------------------------------
+    // Dados do usuário logado
+    // ------------------------------
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {
 
@@ -39,16 +42,20 @@ public class AuthController {
         );
     }
 
+    // ------------------------------
+    // Registrar usuário
+    // ------------------------------
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
 
         try {
-            UserDTO savedUserResponse = userService.registerUser(user);
+            // Aqui usamos "system" como performedBy, porque o registro não foi feito por um admin logado
+            UserDTO savedUserResponse = userService.registerUser(user, "system");
 
             String token = jwtService.generateToken(user); // ou use o User salvo do repositório
 
             return ResponseEntity.ok(
-                    new AuthResponse(token, "", savedUserResponse.email(), savedUserResponse.name())
+                    new AuthResponse(token, savedUserResponse.id(), savedUserResponse.email(), savedUserResponse.name())
             );
 
         } catch (RuntimeException e) {
@@ -56,11 +63,14 @@ public class AuthController {
         }
     }
 
+    // ------------------------------
+    // Login
+    // ------------------------------
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
         var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("CPF ou senha inválidos."));
+                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos."));
 
         if (!userService.passwordMatches(request.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha inválida");
@@ -68,7 +78,9 @@ public class AuthController {
 
         String token = jwtService.generateToken(user);
 
-        // Retornar token + contaId
+        // Opcional: registrar log de login
+        userService.logUserLogin(user.getId());
+
         return ResponseEntity.ok(
                 new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
         );
