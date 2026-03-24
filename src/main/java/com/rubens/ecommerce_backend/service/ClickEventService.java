@@ -33,7 +33,7 @@ public class ClickEventService {
     private final ProductRepository productRepository;
     private final ClickEventRepository clickEventRepository;
 
-    public ClickEventDTO registerClick(String productId, String email) {
+    public ClickEventDTO createClick(String productId, String email) {
 
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));

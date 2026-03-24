@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.model.User;
+import com.rubens.ecommerce_backend.dto.UserDTO;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -35,6 +36,18 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateToken(UserDTO userDTO) {
+        return Jwts.builder()
+                .setSubject(userDTO.email())
+                .claim("id", userDTO.id())
+                .claim("name", userDTO.name())
+                .claim("role", userDTO.role())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(key)
+                .compact();
+    }
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -43,7 +56,6 @@ public class JwtService {
         final String email = extractEmail(token);
         return (email.equals(user.getEmail()) && !isTokenExpired(token));
     }
-
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

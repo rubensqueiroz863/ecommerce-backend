@@ -7,24 +7,21 @@ import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.UserDTO;
 import com.rubens.ecommerce_backend.model.User;
-import com.rubens.ecommerce_backend.model.UserActivityLog;
-import com.rubens.ecommerce_backend.repository.UserActivityLogRepository;
 import com.rubens.ecommerce_backend.service.UserService;
 import com.rubens.ecommerce_backend.service.WebSocketService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-    private final UserActivityLogRepository logRepository;
     private final WebSocketService webSocketService;
 
-    // CREATE
-    @PostMapping("/register")
+    // Funcionando
+    @PostMapping
     public UserDTO registerUser(
             @RequestBody User user,
             @RequestHeader(value = "X-Admin-User", required = false) String performedBy
@@ -41,19 +38,22 @@ public class UserController {
         return created;
     }
 
-    @GetMapping("/all")
+    // Funcionando
+    @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
+    // Funcionando
     @GetMapping("/{id}")
-    public UserDTO getUser(@PathVariable String id) {
+    public UserDTO getUser(@PathVariable("id") String id) {
         return userService.getUser(id);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public void deletarUser(
-            @PathVariable String id,
+    // Funcionando
+    @DeleteMapping("/{id}")
+    public void deleteUser(
+            @PathVariable("id") String id,
             @RequestHeader(value = "X-Admin-User", required = false) String performedBy
     ) {
         if (performedBy == null || performedBy.isBlank()) performedBy = "system";
@@ -66,11 +66,12 @@ public class UserController {
         ));
     }
 
-    @PatchMapping("/edit/{id}")
-    public UserDTO atualizarUsuario(
-            @PathVariable String id,
-            @RequestBody UserDTO dto,
-            @RequestHeader(value = "X-Admin-User", required = false) String performedBy
+    // Funcionando
+    @PatchMapping("/{id}")
+    public UserDTO updateUser(
+        @PathVariable("id") String id,
+        @RequestBody UserDTO dto,
+        @RequestHeader(value = "X-Admin-User", required = false) String performedBy
     ) {
         if (performedBy == null || performedBy.isBlank()) performedBy = "system";
 
@@ -82,10 +83,5 @@ public class UserController {
         ));
 
         return updated;
-    }
-
-    @GetMapping("/activity")
-    public List<UserActivityLog> getAllLogs() {
-        return logRepository.findAllByOrderByTimestampDesc();
     }
 }

@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class SubCategoryDTO {
-  
   private String id;
   private String name;
   private String slug;

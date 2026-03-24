@@ -17,6 +17,7 @@ public class CategoryController {
     this.categoryService = categoryService;
   }
 
+  // Funcionando
   @GetMapping
   public List<CategoryDTO> findAll() {
     return categoryService.findAll();

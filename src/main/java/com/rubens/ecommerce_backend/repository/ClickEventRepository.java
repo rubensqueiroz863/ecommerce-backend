@@ -22,7 +22,10 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, String> 
         GROUP BY c.product
         ORDER BY COUNT(c) DESC
     """)
-    List<Object[]> findMostClickedProductsByUser(String userId, Pageable pageable);
+    List<Object[]> findMostClickedProductsByUser(
+        @Param("userId") String userId,
+        Pageable pageable
+    );
 
     @Query("""
         SELECT MONTH(c.createdAt), COUNT(c)

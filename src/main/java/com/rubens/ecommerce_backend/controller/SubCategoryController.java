@@ -16,10 +16,11 @@ public class SubCategoryController {
         this.subCategoryService = subCategoryService;
     }
 
+    // Funcionando
     @GetMapping
     public PageResponse<SubCategoryDTO> findAll(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         return subCategoryService.findAll(page, size);
     }

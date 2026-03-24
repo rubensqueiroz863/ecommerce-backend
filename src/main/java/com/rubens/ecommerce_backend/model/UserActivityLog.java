@@ -18,9 +18,9 @@ public class UserActivityLog {
     @Builder.Default
     private String id = UUID.randomUUID().toString();
 
-    private String userId;        // Usuário que sofreu a ação
-    private String performedBy;   // Usuário que realizou a ação (admin)
-    private String action;        // CREATE, UPDATE, DELETE
-    private String details;       // Descrição do que foi alterado
+    private String userId;
+    private String performedBy;
+    private String action;
+    private String details;
     private LocalDateTime timestamp;
 }

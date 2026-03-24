@@ -17,7 +17,7 @@ public class WebSocketService {
         body.put("message", message);
 
         restTemplate.postForObject(
-            "http://localhost:3001/api/notify",
+            "https://ecommerce-websocket.onrender.com/api/notify",
             body,
             String.class
         );
