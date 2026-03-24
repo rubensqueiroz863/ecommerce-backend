@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import com.rubens.ecommerce_backend.dto.RegisterRequest;
 import com.rubens.ecommerce_backend.dto.UserDTO;
 import com.rubens.ecommerce_backend.model.AuthResponse;
 import com.rubens.ecommerce_backend.model.LoginRequest;
@@ -25,9 +26,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
-    // ------------------------------
-    // Dados do usuário logado
-    // ------------------------------
+    // Funcionando
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {
 
@@ -42,30 +41,31 @@ public class AuthController {
         );
     }
 
-    // ------------------------------
-    // Registrar usuário
-    // ------------------------------
+    // Funcionando
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         try {
-            // Aqui usamos "system" como performedBy, porque o registro não foi feito por um admin logado
-            UserDTO savedUserResponse = userService.registerUser(user, "system");
+            User user = new User();
+            user.setName(request.name());
+            user.setEmail(request.email());
+            user.setPassword(request.password());
 
-            String token = jwtService.generateToken(user); // ou use o User salvo do repositório
+            UserDTO savedUserDTO = userService.registerUser(user, "system");
+
+            String token = jwtService.generateToken(user); // usa User
 
             return ResponseEntity.ok(
-                    new AuthResponse(token, savedUserResponse.id(), savedUserResponse.email(), savedUserResponse.name())
+                new AuthResponse(token, savedUserDTO.id(), savedUserDTO.email(), savedUserDTO.name())
             );
 
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(
+                new AuthResponse(null, null, null, e.getMessage())
+            );
         }
     }
 
-    // ------------------------------
-    // Login
-    // ------------------------------
+    // Funcionando
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
@@ -78,7 +78,6 @@ public class AuthController {
 
         String token = jwtService.generateToken(user);
 
-        // Opcional: registrar log de login
         userService.logUserLogin(user.getId());
 
         return ResponseEntity.ok(

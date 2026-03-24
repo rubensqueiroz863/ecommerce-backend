@@ -27,22 +27,24 @@ public class UserService {
     private final ClickEventRepository clickEventRepository;
     private final UserActivityLogRepository logRepository;
 
-    // --- Registro de usuário normal ---
     public UserDTO registerUser(User user, String performedBy) {
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new RuntimeException("Email já cadastrado.");
         }
 
+        if (user.getRole() == null) {
+            user.setRole(Role.ROLE_USER);
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
-        // log
         logRepository.save(UserActivityLog.builder()
                 .userId(savedUser.getId())
                 .performedBy(performedBy)
                 .action("CREATE")
-                .details("Usuário criado com role: " + savedUser.getRole())
+                .details("Usuário criado com role: " + savedUser.getRole().name())
                 .timestamp(LocalDateTime.now())
                 .build()
         );
@@ -50,7 +52,6 @@ public class UserService {
         return toDTO(savedUser);
     }
 
-    // --- Registro de usuário admin ---
     public UserDTO registerUserAdmin(User user, String performedBy) {
 
         if (user.getEmail() == null || user.getEmail().isBlank()) {
@@ -72,7 +73,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
-        // log
         logRepository.save(UserActivityLog.builder()
                 .userId(savedUser.getId())
                 .performedBy(performedBy)
@@ -85,7 +85,6 @@ public class UserService {
         return toDTO(savedUser);
     }
 
-    // --- Deletar usuário ---
     @Transactional
     public void deleteUser(String id, String performedBy) {
 
@@ -96,7 +95,6 @@ public class UserService {
 
         userRepository.delete(user);
 
-        // log
         logRepository.save(UserActivityLog.builder()
                 .userId(user.getId())
                 .performedBy(performedBy)
@@ -118,7 +116,6 @@ public class UserService {
         );
     }
 
-    // --- Atualizar usuário ---
     @Transactional
     public UserDTO updateUser(String id, UserDTO dto, String performedBy) {
 
@@ -144,7 +141,6 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
 
-        // log
         logRepository.save(UserActivityLog.builder()
                 .userId(user.getId())
                 .performedBy(performedBy)
@@ -157,7 +153,6 @@ public class UserService {
         return toDTO(updatedUser);
     }
 
-    // --- Consultas ---
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(this::toDTO).toList();
     }

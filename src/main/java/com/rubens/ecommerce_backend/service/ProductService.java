@@ -27,26 +27,22 @@ public class ProductService {
     private final SubCategoryRepository subCategoryRepository;
     private final ClickEventRepository clickEventRepository;
     
-    public ProductRequestDTO registerProduct(
-            String name,
-            Double price,
-            String photo,
-            String subCategoryId
-    ) {
+    public ProductDTO createProduct(ProductRequestDTO productDTO) {
 
         SubCategory subCategory = subCategoryRepository
-                .findById(subCategoryId)
+                .findById(productDTO.subCategory())
                 .orElseThrow(() -> new RuntimeException("SubCategory not found"));
 
         Product product = new Product();
-        product.setName(name);
-        product.setPrice(price);
-        product.setPhoto(photo);
+        product.setName(productDTO.name());
+        product.setPrice(productDTO.price());
+        product.setPhoto(productDTO.photo());
         product.setSubCategory(subCategory);
 
         Product savedProduct = productRepository.save(product);
 
-        return new ProductRequestDTO(
+        return new ProductDTO(
+                savedProduct.getId(),
                 savedProduct.getName(),
                 savedProduct.getPrice(),
                 savedProduct.getPhoto(),
@@ -54,7 +50,7 @@ public class ProductService {
         );
     }
 
-    public PageResponse<ProductDTO> findByName(
+    public PageResponse<ProductDTO> findAllByName(
         String name,
         int page,
         int size
@@ -140,10 +136,8 @@ public class ProductService {
 
     @Transactional
     public void deleteProduct(String id) {
-        // Remove eventos que referenciam o produto
         clickEventRepository.deleteByProductId(id);
 
-        // Agora deleta o produto
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
         productRepository.delete(product);
@@ -160,15 +154,12 @@ public class ProductService {
     }
 
     private ProductDTO toDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-        dto.setId(product.getId());
-        dto.setName(product.getName());
-        dto.setPrice(product.getPrice());
-        dto.setPhoto(product.getPhoto());
-        dto.setSubCategory(product.getSubCategory().getName());
-        dto.setCategory(
-            product.getSubCategory().getCategory().getName()
+        return new ProductDTO(
+            product.getId(),
+            product.getName(),
+            product.getPrice(),
+            product.getPhoto(),
+            product.getSubCategory().getName()
         );
-        return dto;
     }
 }

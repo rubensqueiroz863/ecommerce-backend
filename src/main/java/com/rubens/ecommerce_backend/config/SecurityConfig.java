@@ -37,13 +37,13 @@ public class SecurityConfig {
           .authorizeHttpRequests(auth -> auth
               .requestMatchers(
                 "/auth/**",
-                "/search-history/**",
+                "/searchs/**",
                 "/categories/**",
-                "produtos/**",
-                "subcategories/**",
+                "/products/**",
+                "/subcategories/**",
                 "/events/**",
-                "/ws/**",
-                "/user/**",
+                "/users/**",
+                "/logs/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/swagger-ui.html"
@@ -75,7 +75,6 @@ public class SecurityConfig {
       configuration.setAllowedMethods(List.of("GET","POST","PATCH","PUT","DELETE","OPTIONS"));
       configuration.setAllowCredentials(true);
 
-      // ✅ Importante: Authorization precisa estar aqui
       configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
       configuration.setExposedHeaders(List.of("Authorization"));
       configuration.setMaxAge(3600L);

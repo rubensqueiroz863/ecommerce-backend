@@ -17,26 +17,27 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
-@RequestMapping("/search-history")
-public class SearchHistoryController  {
+@RequestMapping("/searchs")
+public class SearchController  {
 
     private final SearchHistoryService searchHistoryService;
 
-    public SearchHistoryController(SearchHistoryService searchHistoryService) {
+    public SearchController(SearchHistoryService searchHistoryService) {
         this.searchHistoryService = searchHistoryService;
     }
 
-    @PostMapping("/search")
+    // Funcionando
+    @PostMapping
     public SearchHistoryDTO registerSearch(@RequestBody SearchRequestDTO request) {
-
         return searchHistoryService.registerSearch(
             request.getQuery(),
             request.getUserEmail()
         );
     }
 
-    @GetMapping("/last/{userId}")
-    public List<LastSearchHistoryDTO> getLastSearches(@PathVariable String userId) {
-        return searchHistoryService.getLastSearches(userId);
+    // Funcionando
+    @GetMapping("/{id}")
+    public List<LastSearchHistoryDTO> getLastSearches(@PathVariable("id") String id) {
+        return searchHistoryService.getLastSearches(id);
     }
 }
