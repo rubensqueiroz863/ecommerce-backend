@@ -46,8 +46,8 @@ public class ClickEventController {
     // Funcionando
     @GetMapping("/users/{userId}/top-clicks")
     public List<MostClickedProductDTO> getUserTopClickedProducts(
-            @PathVariable String userId,
-            @RequestParam(defaultValue = "10") int limit) {
+            @PathVariable("userId") String userId,
+            @RequestParam(name = "limit", defaultValue = "10") int limit) {
 
         return clickEventService.getMostClickedProductsByUser(userId, limit);
     }
@@ -55,7 +55,7 @@ public class ClickEventController {
     // Funcionando
     @GetMapping("/users/{userId}/recommendations")
     public UserRecommendationGroupDTO getUserRecommendations(
-            @PathVariable String userId
+            @PathVariable("userId") String userId
     ) {
         return clickEventService.getRecommendationsForUser(userId);
     }
