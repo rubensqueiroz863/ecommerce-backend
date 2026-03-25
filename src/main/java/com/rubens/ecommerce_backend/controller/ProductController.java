@@ -27,10 +27,18 @@ public class ProductController {
         return productService.findAllByName(name, page, size);
     }
 
-    // Funcionando
     @GetMapping("/{id}")
     public ProductDTO findById(@PathVariable("id") String id) {
         return productService.findById(id);
+    }
+
+    // Funcionando
+    @GetMapping("/subcategory/{slug}")
+    public PageResponse<ProductDTO> findAllBySlug(
+        @PathVariable("slug") String slug,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size) {
+        return productService.findBySubCategorySlug(slug, page, size);
     }
 
     // Funcionando
