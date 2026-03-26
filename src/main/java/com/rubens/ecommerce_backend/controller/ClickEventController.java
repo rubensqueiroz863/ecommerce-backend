@@ -21,7 +21,8 @@ public class ClickEventController {
     public ClickEventDTO createClick(@RequestBody ClickRequestDTO request) {
         return clickEventService.createClick(
             request.productId(),
-            request.userEmail()
+            request.userEmail(),
+            "system"
         );
     }
 

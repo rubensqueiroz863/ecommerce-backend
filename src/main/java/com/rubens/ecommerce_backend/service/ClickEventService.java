@@ -18,9 +18,11 @@ import com.rubens.ecommerce_backend.dto.ProductRecommendationDTO;
 import com.rubens.ecommerce_backend.dto.ProductRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.dto.UserRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.model.ClickEvent;
+import com.rubens.ecommerce_backend.model.EventActivityLog;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.repository.ClickEventRepository;
+import com.rubens.ecommerce_backend.repository.EventActivityLogRepository;
 import com.rubens.ecommerce_backend.repository.ProductRepository;
 import com.rubens.ecommerce_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +34,9 @@ public class ClickEventService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ClickEventRepository clickEventRepository;
+    private final EventActivityLogRepository eventActivityLogRepository;
 
-    public ClickEventDTO createClick(String productId, String email) {
+    public ClickEventDTO createClick(String productId, String email, String performedBy) {
 
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
@@ -44,6 +47,15 @@ public class ClickEventService {
         ClickEvent event = new ClickEvent(user, product);
 
         ClickEvent savedEvent = clickEventRepository.save(event);
+
+        eventActivityLogRepository.save(EventActivityLog.builder()
+                .eventId(savedEvent.getId())
+                .performedBy(performedBy)
+                .action("CREATE")
+                .details("Evento de click criado pelo user: " + savedEvent.getUser().getId() + " ao produto: " + savedEvent.getProduct().getId())
+                .timestamp(LocalDateTime.now())
+                .build()
+        );
 
         return new ClickEventDTO(
             savedEvent.getId(),
