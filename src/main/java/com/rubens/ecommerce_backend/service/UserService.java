@@ -25,7 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClickEventRepository clickEventRepository;
-    private final UserActivityLogRepository logRepository;
+    private final UserActivityLogRepository userActivityLogRepository;
 
     public UserDTO registerUser(User user, String performedBy) {
 
@@ -40,7 +40,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
-        logRepository.save(UserActivityLog.builder()
+        userActivityLogRepository.save(UserActivityLog.builder()
                 .userId(savedUser.getId())
                 .performedBy(performedBy)
                 .action("CREATE")
@@ -73,7 +73,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
-        logRepository.save(UserActivityLog.builder()
+        userActivityLogRepository.save(UserActivityLog.builder()
                 .userId(savedUser.getId())
                 .performedBy(performedBy)
                 .action("CREATE")
@@ -95,7 +95,7 @@ public class UserService {
 
         userRepository.delete(user);
 
-        logRepository.save(UserActivityLog.builder()
+        userActivityLogRepository.save(UserActivityLog.builder()
                 .userId(user.getId())
                 .performedBy(performedBy)
                 .action("DELETE")
@@ -106,7 +106,7 @@ public class UserService {
     }
 
     public void logUserLogin(String userId) {
-        logRepository.save(UserActivityLog.builder()
+        userActivityLogRepository.save(UserActivityLog.builder()
             .userId(userId)
             .performedBy(userId)
             .action("LOGIN")
@@ -141,7 +141,7 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
 
-        logRepository.save(UserActivityLog.builder()
+        userActivityLogRepository.save(UserActivityLog.builder()
                 .userId(user.getId())
                 .performedBy(performedBy)
                 .action("UPDATE")
