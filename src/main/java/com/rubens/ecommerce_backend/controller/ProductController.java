@@ -44,18 +44,18 @@ public class ProductController {
     // Funcionando
     @PostMapping
     public ProductDTO createProduct(@RequestBody ProductRequestDTO dto) {
-        return productService.createProduct(dto);
+        return productService.createProduct(dto, "system");
     }
 
     // Funcionando
     @PatchMapping("/{id}")
-    public ProductDTO updateProduct(@PathVariable("id") String id, @RequestBody ProductRequestDTO dto) {
-        return productService.updateProduct(id, dto);
+    public ProductDTO updateProduct(@PathVariable("id") String id, @RequestBody ProductRequestDTO dto    ) {
+        return productService.updateProduct(id, dto, "system");
     }
 
     // Funcionando
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable("id") String id) {
-        productService.deleteProduct(id);
+        productService.deleteProduct(id, "system");
     }
 }
