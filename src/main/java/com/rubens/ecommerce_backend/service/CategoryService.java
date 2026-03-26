@@ -8,14 +8,13 @@ import com.rubens.ecommerce_backend.dto.CategoryDTO;
 import com.rubens.ecommerce_backend.model.Category;
 import com.rubens.ecommerce_backend.repository.CategoryRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-
-    public CategoryService(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
-    }
 
     public List<CategoryDTO> findAll() {
         return categoryRepository.findAll()

@@ -11,7 +11,6 @@ import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.ProductActivityLog;
 import com.rubens.ecommerce_backend.model.SubCategory;
-import com.rubens.ecommerce_backend.model.UserActivityLog;
 import com.rubens.ecommerce_backend.repository.ClickEventRepository;
 import com.rubens.ecommerce_backend.repository.ProductActivityLogRepository;
 import com.rubens.ecommerce_backend.repository.ProductRepository;

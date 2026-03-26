@@ -6,15 +6,14 @@ import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.SubCategoryDTO;
 import com.rubens.ecommerce_backend.service.SubCategoryService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/subcategories")
+@RequiredArgsConstructor
 public class SubCategoryController {
 
     private final SubCategoryService subCategoryService;
-
-    public SubCategoryController(SubCategoryService subCategoryService) {
-        this.subCategoryService = subCategoryService;
-    }
 
     // Funcionando
     @GetMapping

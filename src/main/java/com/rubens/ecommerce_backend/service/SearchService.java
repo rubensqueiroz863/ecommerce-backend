@@ -7,22 +7,22 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.LastSearchHistoryDTO;
-import com.rubens.ecommerce_backend.dto.SearchHistoryDTO;
-import com.rubens.ecommerce_backend.model.SearchHistory;
+import com.rubens.ecommerce_backend.dto.SearchDTO;
+import com.rubens.ecommerce_backend.model.SearchActivityLog;
+import com.rubens.ecommerce_backend.model.Search;
 import com.rubens.ecommerce_backend.model.User;
-import com.rubens.ecommerce_backend.repository.SearchHistoryRepository;
+import com.rubens.ecommerce_backend.repository.SearchActivityLogRepository;
+import com.rubens.ecommerce_backend.repository.SearchRepository;
 import com.rubens.ecommerce_backend.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
-public class SearchHistoryService {
+@RequiredArgsConstructor
+public class SearchService {
 
-    private final SearchHistoryRepository searchHistoryRepository;
+    private final SearchRepository searchHistoryRepository;
     private final UserRepository userRepository;
-
-    public SearchHistoryService(SearchHistoryRepository searchHistoryRepository, UserRepository userRepository) {
-        this.searchHistoryRepository = searchHistoryRepository;
-        this.userRepository = userRepository;
-    }
+    private final SearchActivityLogRepository searchActivityLogRepository;
 
     public List<LastSearchHistoryDTO> getLastSearches(String userId) {
         return searchHistoryRepository
@@ -32,24 +32,33 @@ public class SearchHistoryService {
                 .toList();
     }
 
-    public SearchHistoryDTO registerSearch(String query, String email) {
+    public SearchDTO createSearch(String query, String email, String performedBy) {
 
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
 
-        SearchHistory search = searchHistoryRepository
+        Search search = searchHistoryRepository
             .findByUserIdAndQuery(user.getId(), query)
             .orElse(null);
 
         if (search != null) {
             search.setCreatedAt(LocalDateTime.now());
         } else {
-            search = new SearchHistory(user, query);
+            search = new Search(user, query);
         }
 
         searchHistoryRepository.save(search);
 
-        return new SearchHistoryDTO(
+        searchActivityLogRepository.save(SearchActivityLog.builder()
+                .searchId(search.getId())
+                .performedBy("system")
+                .action("CREATE")
+                .details("Pesquisa: " + search.getQuery() + " Criada pelo user: " + search.getUser().getId())
+                .timestamp(LocalDateTime.now())
+                .build()
+        );
+
+        return new SearchDTO(
             search.getId(),
             user.getId()
         );

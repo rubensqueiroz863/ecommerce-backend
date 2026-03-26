@@ -1,6 +1,6 @@
 package com.rubens.ecommerce_backend.dto;
 
-public record SearchHistoryDTO(
+public record SearchDTO(
     String id,
     String userId
 ) {}

@@ -9,7 +9,6 @@ import com.rubens.ecommerce_backend.dto.UserDTO;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.service.UserService;
 import com.rubens.ecommerce_backend.service.WebSocketService;
-
 import lombok.RequiredArgsConstructor;
 
 @RestController
