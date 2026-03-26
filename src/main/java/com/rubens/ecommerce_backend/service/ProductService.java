@@ -1,5 +1,6 @@
 package com.rubens.ecommerce_backend.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -8,8 +9,11 @@ import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.model.Product;
+import com.rubens.ecommerce_backend.model.ProductActivityLog;
 import com.rubens.ecommerce_backend.model.SubCategory;
+import com.rubens.ecommerce_backend.model.UserActivityLog;
 import com.rubens.ecommerce_backend.repository.ClickEventRepository;
+import com.rubens.ecommerce_backend.repository.ProductActivityLogRepository;
 import com.rubens.ecommerce_backend.repository.ProductRepository;
 import com.rubens.ecommerce_backend.repository.SubCategoryRepository;
 
@@ -26,8 +30,9 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final ClickEventRepository clickEventRepository;
-    
-    public ProductDTO createProduct(ProductRequestDTO productDTO) {
+    private final ProductActivityLogRepository productActivityLogRepository;
+
+    public ProductDTO createProduct(ProductRequestDTO productDTO, String performedBy) {
 
         SubCategory subCategory = subCategoryRepository
                 .findById(productDTO.subCategory())
@@ -40,6 +45,15 @@ public class ProductService {
         product.setSubCategory(subCategory);
 
         Product savedProduct = productRepository.save(product);
+
+        productActivityLogRepository.save(ProductActivityLog.builder()
+                .productId(savedProduct.getId())
+                .performedBy(performedBy)
+                .action("CREATE")
+                .details("Producto criado: " + savedProduct.getId())
+                .timestamp(LocalDateTime.now())
+                .build()
+        );
 
         return new ProductDTO(
                 savedProduct.getId(),
@@ -104,20 +118,25 @@ public class ProductService {
         return toDTO(product);
     }
 
-    public ProductDTO updateProduct(String id, ProductRequestDTO dto) {
+    public ProductDTO updateProduct(String id, ProductRequestDTO dto, String performedBy) {
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        
+        StringBuilder details = new StringBuilder();
 
         if (dto.name() != null && !dto.name().isBlank()) {
+            details.append("Nome: ").append(product.getName()).append(" -> ").append(dto.name()).append("; ");
             product.setName(dto.name());
         }
 
         if (dto.price() != null) {
+            details.append("Preço: ").append(product.getPrice()).append(" -> ").append(dto.price()).append("; ");
             product.setPrice(dto.price());
         }
 
         if (dto.photo() != null && !dto.photo().isBlank()) {
+            details.append("Foto: ").append(product.getPhoto()).append(" -> ").append(dto.photo()).append("; ");
             product.setPhoto(dto.photo());
         }
 
@@ -125,22 +144,40 @@ public class ProductService {
             SubCategory subCategory = subCategoryRepository
                 .findById(dto.subCategory())
                 .orElseThrow(() -> new RuntimeException("SubCategory not found"));
-
+            details.append("Preço: ").append(product.getSubCategory().getName()).append(" -> ").append(dto.subCategory()).append("; ");
             product.setSubCategory(subCategory);
         }
 
         Product updatedProduct = productRepository.save(product);
 
+        productActivityLogRepository.save(ProductActivityLog.builder()
+                .productId(updatedProduct.getId())
+                .performedBy(performedBy)
+                .action("UPDATE")
+                .details(details.toString())
+                .timestamp(LocalDateTime.now())
+                .build()
+        );
+
         return toDTO(updatedProduct);
     }
 
     @Transactional
-    public void deleteProduct(String id) {
+    public void deleteProduct(String id, String performedBy) {
         clickEventRepository.deleteByProductId(id);
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
         productRepository.delete(product);
+
+        productActivityLogRepository.save(ProductActivityLog.builder()
+                .productId(product.getId())
+                .performedBy(performedBy)
+                .action("DELETE")
+                .details("Produto deletado: " + product.getName() + ", preço: " + product.getPrice() + ", subcategory: " + product.getSubCategory().getName())
+                .timestamp(LocalDateTime.now())
+                .build()
+        );
     }
 
     private PageResponse<ProductDTO> toPageResponse(Page<Product> page) {
