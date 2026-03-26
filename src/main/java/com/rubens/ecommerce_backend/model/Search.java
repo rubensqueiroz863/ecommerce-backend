@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "search_history")
-public class SearchHistory {
+public class Search {
 
   @Id
   @Column
@@ -25,10 +25,10 @@ public class SearchHistory {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  public SearchHistory() {
+  public Search() {
   }
 
-  public SearchHistory(User user, String query) {
+  public Search(User user, String query) {
       this.user = user;
       this.query = query;
   }

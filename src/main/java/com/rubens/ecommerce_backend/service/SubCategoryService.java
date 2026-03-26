@@ -7,17 +7,16 @@ import com.rubens.ecommerce_backend.dto.SubCategoryDTO;
 import com.rubens.ecommerce_backend.model.SubCategory;
 import com.rubens.ecommerce_backend.repository.SubCategoryRepository;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 @Service
+@RequiredArgsConstructor
 public class SubCategoryService {
 
     private final SubCategoryRepository subCategoryRepository;
-
-    public SubCategoryService(SubCategoryRepository subCategoryRepository) {
-        this.subCategoryRepository = subCategoryRepository;
-    }
 
     public PageResponse<SubCategoryDTO> findAll(int page, int size) {
 
