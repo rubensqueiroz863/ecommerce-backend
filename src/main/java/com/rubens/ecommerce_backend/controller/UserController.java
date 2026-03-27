@@ -21,13 +21,8 @@ public class UserController {
 
     // Funcionando
     @PostMapping
-    public UserDTO registerUser(
-            @RequestBody User user,
-            @RequestHeader(value = "X-Admin-User", required = false) String performedBy
-    ) {
-        if (performedBy == null || performedBy.isBlank()) performedBy = "system";
-
-        UserDTO created = userService.registerUserAdmin(user, performedBy);
+    public UserDTO registerUser(@RequestBody User user) {
+        UserDTO created = userService.registerUserAdmin(user, "system");
 
         webSocketService.notify(created.id(), Map.of(
                 "type", "USER_CREATED",
@@ -51,13 +46,8 @@ public class UserController {
 
     // Funcionando
     @DeleteMapping("/{id}")
-    public void deleteUser(
-            @PathVariable("id") String id,
-            @RequestHeader(value = "X-Admin-User", required = false) String performedBy
-    ) {
-        if (performedBy == null || performedBy.isBlank()) performedBy = "system";
-
-        userService.deleteUser(id, performedBy);
+    public void deleteUser(@PathVariable("id") String id) {
+        userService.deleteUser(id, "system");
 
         webSocketService.notify(id, Map.of(
                 "type", "USER_DELETED",
@@ -69,18 +59,15 @@ public class UserController {
     @PatchMapping("/{id}")
     public UserDTO updateUser(
         @PathVariable("id") String id,
-        @RequestBody UserDTO dto,
-        @RequestHeader(value = "X-Admin-User", required = false) String performedBy
+        @RequestBody UserDTO dto
     ) {
-        if (performedBy == null || performedBy.isBlank()) performedBy = "system";
+        UserDTO updatedUser = userService.updateUser(id, dto, "system");
 
-        UserDTO updated = userService.updateUser(id, dto, performedBy);
-
-        webSocketService.notify(updated.id(), Map.of(
+        webSocketService.notify(updatedUser.id(), Map.of(
                 "type", "USER_UPDATED",
-                "user", updated
+                "user", updatedUser
         ));
 
-        return updated;
+        return updatedUser;
     }
 }

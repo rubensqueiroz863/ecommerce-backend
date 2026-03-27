@@ -7,12 +7,14 @@ import com.rubens.ecommerce_backend.dto.LastSearchHistoryDTO;
 import com.rubens.ecommerce_backend.dto.SearchDTO;
 import com.rubens.ecommerce_backend.dto.SearchRequestDTO;
 import com.rubens.ecommerce_backend.service.SearchService;
+import com.rubens.ecommerce_backend.service.WebSocketService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,15 +26,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class SearchController  {
 
     private final SearchService searchService;
+    private final WebSocketService webSocketService;
 
     // Funcionando
     @PostMapping
     public SearchDTO createSearch(@RequestBody SearchRequestDTO request) {
-        return searchService.createSearch(
-            request.getQuery(),
-            request.getUserEmail(),
-            "system"
-        );
+        SearchDTO savedSearch = searchService.createSearch(request.getQuery(), request.getUserEmail(), "system");
+        
+        webSocketService.notify(savedSearch.id(), Map.of(
+                "type", "SEARCH_CREATED",
+                "search", savedSearch
+        ));
+        
+        return savedSearch;
     }
 
     // Funcionando

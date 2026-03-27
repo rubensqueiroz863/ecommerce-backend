@@ -24,9 +24,9 @@ public class WebSocketService {
     }
 
     @Async
-    public void notify(String userId, Object message) {
+    public void notify(String id, Object message) {
         Map<String, Object> body = new HashMap<>();
-        body.put("userId", userId);
+        body.put("id", id);
         body.put("message", message);
 
         try {
@@ -35,9 +35,9 @@ public class WebSocketService {
                     body,
                     String.class
             );
-            logger.info("Notificação enviada para WebSocket: userId={}", userId);
+            logger.info("Notificação enviada para WebSocket: id={}", id);
         } catch (RestClientException e) {
-            logger.error("Falha ao enviar notificação para WebSocket: userId={}, erro={}", userId, e.getMessage());
+            logger.error("Falha ao enviar notificação para WebSocket: id={}, erro={}", id, e.getMessage());
         }
     }
 }
