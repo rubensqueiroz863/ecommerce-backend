@@ -1,6 +1,9 @@
 package com.rubens.ecommerce_backend.controller;
 
 import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +15,7 @@ import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.repository.UserRepository;
 import com.rubens.ecommerce_backend.service.JwtService;
 import com.rubens.ecommerce_backend.service.UserService;
+import com.rubens.ecommerce_backend.service.WebSocketService;
 
 import org.springframework.security.core.Authentication;
 
@@ -25,6 +29,7 @@ public class AuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final WebSocketService webSocketService;
 
     // Funcionando
     @GetMapping("/me")
@@ -53,6 +58,11 @@ public class AuthController {
             UserDTO savedUserDTO = userService.registerUser(user, "system");
 
             String token = jwtService.generateToken(user); // usa User
+            
+            webSocketService.notify(savedUserDTO.id(), Map.of(
+                    "type", "USER_CREATED",
+                    "user", savedUserDTO
+            ));
 
             return ResponseEntity.ok(
                 new AuthResponse(token, savedUserDTO.id(), savedUserDTO.email(), savedUserDTO.name())
