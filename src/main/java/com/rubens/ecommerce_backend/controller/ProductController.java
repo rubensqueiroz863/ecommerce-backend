@@ -1,11 +1,15 @@
 package com.rubens.ecommerce_backend.controller;
 
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.service.ProductService;
+import com.rubens.ecommerce_backend.service.WebSocketService;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -14,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductController {
 
     private final ProductService productService;
+    private final WebSocketService webSocketService;
 
     // Funcionando
     @GetMapping
@@ -42,18 +47,37 @@ public class ProductController {
     // Funcionando
     @PostMapping
     public ProductDTO createProduct(@RequestBody ProductRequestDTO dto) {
-        return productService.createProduct(dto, "system");
+        ProductDTO savedProduct = productService.createProduct(dto, "system");
+        
+        webSocketService.notify(savedProduct.id(), Map.of(
+                "type", "PRODUCT_CREATED",
+                "product", savedProduct
+        ));
+        
+        return savedProduct;
     }
 
     // Funcionando
     @PatchMapping("/{id}")
     public ProductDTO updateProduct(@PathVariable("id") String id, @RequestBody ProductRequestDTO dto    ) {
-        return productService.updateProduct(id, dto, "system");
+        ProductDTO updatedProduct = productService.updateProduct(id, dto, "system");
+        
+        webSocketService.notify(updatedProduct.id(), Map.of(
+                "type", "PRODUCT_UPDATED",
+                "product", updatedProduct
+        ));
+
+        return updatedProduct;
     }
 
     // Funcionando
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable("id") String id) {
         productService.deleteProduct(id, "system");
+
+        webSocketService.notify(id, Map.of(
+                "type", "PRODUCT_DELETED",
+                "productId", id
+        ));
     }
 }
