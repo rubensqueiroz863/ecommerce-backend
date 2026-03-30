@@ -2,11 +2,16 @@ package com.rubens.ecommerce_backend.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.rubens.ecommerce_backend.dto.PageResponse;
+import com.rubens.ecommerce_backend.dto.SubCategoryDTO;
 import com.rubens.ecommerce_backend.dto.UserDTO;
 import com.rubens.ecommerce_backend.model.Role;
+import com.rubens.ecommerce_backend.model.SubCategory;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.model.UserActivityLog;
 import com.rubens.ecommerce_backend.repository.ClickEventRepository;
@@ -153,8 +158,20 @@ public class UserService {
         return toDTO(updatedUser);
     }
 
-    public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream().map(this::toDTO).toList();
+    public PageResponse<UserDTO> getAllUsers(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<User> result = userRepository.findAll(pageable);
+        return toPageResponse(result);
+    }
+
+    private PageResponse<UserDTO> toPageResponse(Page<User> page) {
+        return new PageResponse<>(
+            page.getContent()
+                .stream()
+                .map(this::toDTO)
+                .toList(),
+            page.hasNext()
+        );
     }
 
     public UserDTO getUser(String id) {
