@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
 
+import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.UserDTO;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.service.UserService;
@@ -34,8 +35,11 @@ public class UserController {
 
     // Funcionando
     @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers();
+    public PageResponse<UserDTO> getAllUsers(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        return userService.getAllUsers(page, size);
     }
 
     // Funcionando
