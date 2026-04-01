@@ -43,6 +43,16 @@ public class UserController {
     }
 
     // Funcionando
+    @GetMapping("/search")
+    public PageResponse<UserDTO> getAllUsersByName(
+        @RequestParam(name = "name", defaultValue = "") String name,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        return userService.getAllUsersByName(name, page, size);
+    }
+
+    // Funcionando
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable("id") String id) {
         return userService.getUser(id);

@@ -164,6 +164,12 @@ public class UserService {
         return toPageResponse(result);
     }
 
+    public PageResponse<UserDTO> getAllUsersByName(String name, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<User> result = userRepository.findByNameContainingIgnoreCase(name, pageable);
+        return toPageResponse(result);
+    }
+
     private PageResponse<UserDTO> toPageResponse(Page<User> page) {
         return new PageResponse<>(
             page.getContent()
