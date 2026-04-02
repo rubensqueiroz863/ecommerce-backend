@@ -70,7 +70,7 @@ public class SecurityConfig {
             "http://localhost:3000",
             "http://10.0.0.36:3000",
             "http://10.0.0.37:3000",
-            "https://rubensecommerce.vercel.app",
+            "https://nexorashopx.vercel.app",
             "https://ecommerce-git-main-rubens-projects-1b4c900a.vercel.app",
             "https://ecommerce-610ozrgel-rubens-projects-1b4c900a.vercel.app"
         ));
