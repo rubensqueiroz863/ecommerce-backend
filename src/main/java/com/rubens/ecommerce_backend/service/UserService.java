@@ -1,17 +1,23 @@
 package com.rubens.ecommerce_backend.service;
 
-import java.util.List;
-
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
-import com.rubens.ecommerce_backend.dto.SubCategoryDTO;
 import com.rubens.ecommerce_backend.dto.UserDTO;
+import com.rubens.ecommerce_backend.exception.EmailAlreadyExistsException;
+import com.rubens.ecommerce_backend.exception.InvalidEmailException;
+import com.rubens.ecommerce_backend.exception.InvalidLimitException;
+import com.rubens.ecommerce_backend.exception.InvalidNameException;
+import com.rubens.ecommerce_backend.exception.InvalidPageException;
+import com.rubens.ecommerce_backend.exception.InvalidRoleException;
+import com.rubens.ecommerce_backend.exception.UserDeletionException;
+import com.rubens.ecommerce_backend.exception.UserNotFoundException;
+import com.rubens.ecommerce_backend.exception.WeakPasswordException;
 import com.rubens.ecommerce_backend.model.Role;
-import com.rubens.ecommerce_backend.model.SubCategory;
 import com.rubens.ecommerce_backend.model.User;
 import com.rubens.ecommerce_backend.model.UserActivityLog;
 import com.rubens.ecommerce_backend.repository.ClickEventRepository;
@@ -34,137 +40,274 @@ public class UserService {
 
     public UserDTO registerUser(User user, String performedBy) {
 
+        if (user.getName() == null || user.getName().isBlank()) {
+            throw new InvalidNameException();
+        }
+
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new InvalidEmailException("Enter your email");
+        }
+
+        if (!user.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new InvalidEmailException("Invalid email.");
+        }
+
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new WeakPasswordException("Enter your password.");
+        }
+
+        if (user.getPassword().length() < 8) {
+            throw new WeakPasswordException("Password has to be at least 8 characters.");
+        }
+
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email já cadastrado.");
+            throw new EmailAlreadyExistsException();
         }
 
         if (user.getRole() == null) {
             user.setRole(Role.ROLE_USER);
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
+        try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            User savedUser = userRepository.save(user);
 
-        userActivityLogRepository.save(UserActivityLog.builder()
-                .userId(savedUser.getId())
-                .performedBy(performedBy)
-                .action("CREATE")
-                .details("Usuário criado com role: " + savedUser.getRole().name())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+            try {
+                userActivityLogRepository.save(UserActivityLog.builder()
+                        .userId(savedUser.getId())
+                        .performedBy(performedBy)
+                        .action("CREATE")
+                        .details("Usuário criado com role: " + savedUser.getRole().name())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+                );
+            } catch (Exception logError) {
+                System.err.println("Erro ao salvar log: " + logError.getMessage());
+            }
 
-        return toDTO(savedUser);
+            return toDTO(savedUser);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException();
+        }
     }
 
     public UserDTO registerUserAdmin(User user, String performedBy) {
 
+        if (user.getName() == null || user.getName().isBlank()) {
+            throw new InvalidNameException();
+        }
+
         if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new RuntimeException("Email é obrigatório.");
+            throw new InvalidEmailException("Enter your email");
+        }
+
+        if (!user.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new InvalidEmailException("Invalid email.");
+        }
+
+        if (user.getRole() != Role.ROLE_USER && user.getRole() != Role.ROLE_ADMIN) {
+            throw new InvalidRoleException("Invalid role.");
         }
 
         if (user.getPassword() == null || user.getPassword().isBlank()) {
-            throw new RuntimeException("Senha é obrigatória.");
+            throw new WeakPasswordException("Enter your password.");
+        }
+
+        if (user.getPassword().length() < 8) {
+            throw new WeakPasswordException("Password has to be at least 8 characters.");
         }
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email já cadastrado.");
+            throw new EmailAlreadyExistsException();
         }
 
         if (user.getRole() == null) {
-            user.setRole(Role.ROLE_USER);
+            throw new InvalidRoleException("Enter a role");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
+        try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            User savedUser = userRepository.save(user);
 
-        userActivityLogRepository.save(UserActivityLog.builder()
-                .userId(savedUser.getId())
-                .performedBy(performedBy)
-                .action("CREATE")
-                .details("Usuário admin criado com role: " + savedUser.getRole())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+            try {
+                userActivityLogRepository.save(UserActivityLog.builder()
+                        .userId(savedUser.getId())
+                        .performedBy(performedBy)
+                        .action("CREATE")
+                        .details("Usuário admin criado com role: " + savedUser.getRole().name())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+                );
+            } catch (Exception logError) {
+                System.err.println("Erro ao salvar log: " + logError.getMessage());
+            }
 
-        return toDTO(savedUser);
+            return toDTO(savedUser);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException();
+        }
     }
 
     @Transactional
     public void deleteUser(String id, String performedBy) {
 
-        clickEventRepository.deleteByUserId(id);
-
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            .orElseThrow(UserNotFoundException::new);
 
-        userRepository.delete(user);
+        try {
+            clickEventRepository.deleteByUserId(id);
 
-        userActivityLogRepository.save(UserActivityLog.builder()
-                .userId(user.getId())
-                .performedBy(performedBy)
-                .action("DELETE")
-                .details("Usuário deletado: " + user.getName() + ", email: " + user.getEmail() + ", role: " + user.getRole())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+            userRepository.delete(user);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new UserDeletionException("The user could not be deleted.");
+        }
+
+        try {
+            userActivityLogRepository.save(UserActivityLog.builder()
+                    .userId(user.getId())
+                    .performedBy(performedBy)
+                    .action("DELETE")
+                    .details("Usuário deletado: " + user.getName() + ", email: " + user.getEmail() + ", role: " + user.getRole())
+                    .timestamp(LocalDateTime.now())
+                    .build()
+            );
+        } catch (Exception logError) {
+            System.err.println("Erro ao salvar log: " + logError.getMessage());
+        }
     }
 
     public void logUserLogin(String userId) {
-        userActivityLogRepository.save(UserActivityLog.builder()
-            .userId(userId)
-            .performedBy(userId)
-            .action("LOGIN")
-            .details("Usuário efetuou login")
-            .timestamp(LocalDateTime.now())
-            .build()
-        );
+        try {
+            userActivityLogRepository.save(UserActivityLog.builder()
+                .userId(userId)
+                .performedBy(userId)
+                .action("LOGIN")
+                .details("Usuário efetuou login")
+                .timestamp(LocalDateTime.now())
+                .build()
+            );
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar log de login: " + e.getMessage());
+        }
     }
 
     @Transactional
     public UserDTO updateUser(String id, UserDTO dto, String performedBy) {
 
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            .orElseThrow(UserNotFoundException::new);
 
         StringBuilder details = new StringBuilder();
 
         if (dto.name() != null && !dto.name().isBlank()) {
-            details.append("Nome: ").append(user.getName()).append(" -> ").append(dto.name()).append("; ");
+            details.append("Nome: ")
+                .append(user.getName())
+                .append(" -> ")
+                .append(dto.name())
+                .append("; ");
+
             user.setName(dto.name());
         }
 
         if (dto.email() != null && !dto.email().isBlank()) {
-            details.append("Email: ").append(user.getEmail()).append(" -> ").append(dto.email()).append("; ");
+
+            if (!dto.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                throw new InvalidEmailException("Invalid email.");
+            }
+
+            details.append("Email: ")
+                .append(user.getEmail())
+                .append(" -> ")
+                .append(dto.email())
+                .append("; ");
+
             user.setEmail(dto.email());
         }
 
+        // 🔹 Role
         if (dto.role() != null && !dto.role().isBlank()) {
-            details.append("Role: ").append(user.getRole()).append(" -> ").append(dto.role()).append("; ");
-            user.setRole(Role.valueOf(dto.role().toUpperCase()));
+            try {
+                Role newRole = Role.valueOf(dto.role().toUpperCase());
+
+                details.append("Role: ")
+                    .append(user.getRole())
+                    .append(" -> ")
+                    .append(newRole)
+                    .append("; ");
+
+                user.setRole(newRole);
+
+            } catch (IllegalArgumentException e) {
+                throw new InvalidRoleException("Invalid role.");
+            }
         }
 
-        User updatedUser = userRepository.save(user);
+        // Password
+        if (dto.password() != null && !dto.password().isBlank()) {
 
-        userActivityLogRepository.save(UserActivityLog.builder()
-                .userId(user.getId())
-                .performedBy(performedBy)
-                .action("UPDATE")
-                .details(details.toString())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+            if (dto.password().length() < 8) {
+                throw new WeakPasswordException("Password has to be at least 8 characters.");
+            }
 
-        return toDTO(updatedUser);
+            details.append("Password: ")
+                .append("Confidential")
+                .append(" -> ")
+                .append("Confidential")
+                .append("; ");
+
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
+
+        try {
+            User updatedUser = userRepository.save(user);
+            try {
+                userActivityLogRepository.save(UserActivityLog.builder()
+                        .userId(user.getId())
+                        .performedBy(performedBy)
+                        .action("UPDATE")
+                        .details(details.toString())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+                );
+            } catch (Exception logError) {
+                System.err.println("Erro ao salvar log: " + logError.getMessage());
+            }
+
+            return toDTO(updatedUser);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException();
+        }
     }
 
     public PageResponse<UserDTO> getAllUsers(int page, int size) {
+        
+        if (page < 0) {
+            throw new InvalidPageException();
+        }
+
+        if (size <= 0 || size > 100) {
+            throw new InvalidLimitException();
+        }
+        
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> result = userRepository.findAll(pageable);
         return toPageResponse(result);
     }
 
     public PageResponse<UserDTO> getAllUsersByName(String name, int page, int size) {
+        
+        if (page < 0) {
+            throw new InvalidPageException();
+        }
+
+        if (size <= 0 || size > 100) {
+            throw new InvalidLimitException();
+        }
+
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> result = userRepository.findByNameContainingIgnoreCase(name, pageable);
         return toPageResponse(result);
@@ -182,7 +325,8 @@ public class UserService {
 
     public UserDTO getUser(String id) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            .orElseThrow(UserNotFoundException::new);
+
         return toDTO(user);
     }
 

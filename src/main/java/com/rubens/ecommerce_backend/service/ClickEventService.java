@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,10 @@ import com.rubens.ecommerce_backend.dto.MostClickedProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRecommendationDTO;
 import com.rubens.ecommerce_backend.dto.ProductRecommendationGroupDTO;
 import com.rubens.ecommerce_backend.dto.UserRecommendationGroupDTO;
+import com.rubens.ecommerce_backend.exception.ClickEventCreationException;
+import com.rubens.ecommerce_backend.exception.InvalidLimitException;
+import com.rubens.ecommerce_backend.exception.ProductNotFoundException;
+import com.rubens.ecommerce_backend.exception.UserNotFoundException;
 import com.rubens.ecommerce_backend.model.ClickEvent;
 import com.rubens.ecommerce_backend.model.EventActivityLog;
 import com.rubens.ecommerce_backend.model.Product;
@@ -39,23 +44,35 @@ public class ClickEventService {
     public ClickEventDTO createClick(String productId, String email, String performedBy) {
 
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+            .orElseThrow(UserNotFoundException::new);
 
         Product product = productRepository.findById(productId)
-            .orElseThrow();
+            .orElseThrow(ProductNotFoundException::new);
 
         ClickEvent event = new ClickEvent(user, product);
 
-        ClickEvent savedEvent = clickEventRepository.save(event);
+        ClickEvent savedEvent;
+        try {
+            savedEvent = clickEventRepository.save(event);
+        } catch (DataIntegrityViolationException e) {
+            throw new ClickEventCreationException("Click cannot be created.");
+        }
 
-        eventActivityLogRepository.save(EventActivityLog.builder()
-                .eventId(savedEvent.getId())
-                .performedBy(performedBy)
-                .action("CREATE")
-                .details("Evento de click criado pelo user: " + savedEvent.getUser().getId() + " ao produto: " + savedEvent.getProduct().getId())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+        try {
+            eventActivityLogRepository.save(EventActivityLog.builder()
+                    .eventId(savedEvent.getId())
+                    .performedBy(performedBy)
+                    .action("CREATE")
+                    .details("Evento de click criado pelo user: "
+                            + savedEvent.getUser().getId()
+                            + " ao produto: "
+                            + savedEvent.getProduct().getId())
+                    .timestamp(LocalDateTime.now())
+                    .build()
+            );
+        } catch (Exception logError) {
+            System.err.println("Erro ao salvar log: " + logError.getMessage());
+        }
 
         return new ClickEventDTO(
             savedEvent.getId(),
@@ -65,6 +82,14 @@ public class ClickEventService {
     }
 
     public List<MostClickedProductDTO> getMostClickedProductsByUser(String userId, int limit) {
+
+        if (limit <= 0 || limit > 100) {
+            throw new InvalidLimitException();
+        }
+
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException();
+        }
 
         Pageable pageable = PageRequest.of(0, limit);
 
@@ -107,30 +132,20 @@ public class ClickEventService {
         return clickEventRepository
                 .countClicksPerProductPerMonth(start, end);
     }
-
+    
     public List<ProductRecommendationGroupDTO> getAllRecommendations() {
-        List<Product> allProducts = productRepository.findAll();
-
-        List<ProductRecommendationGroupDTO> allRecommendations = new ArrayList<>();
-
-        for (Product p : allProducts) {
-            List<ProductRecommendationDTO> related = clickEventRepository.findTopRelatedProducts(p.getId());
-
-            ProductRecommendationGroupDTO group = new ProductRecommendationGroupDTO(
+        return productRepository.findAll().stream()
+            .map(p -> new ProductRecommendationGroupDTO(
                 p.getName(),
-                related
-            );
-
-            allRecommendations.add(group);
-        }
-
-        return allRecommendations;
+                clickEventRepository.findTopRelatedProducts(p.getId())
+            ))
+            .toList();
     }
 
     public UserRecommendationGroupDTO getRecommendationsForUser(String userId) {
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(UserNotFoundException::new);
 
         List<ProductRecommendationDTO> recommended =
             clickEventRepository.findRecommendedProductsForUser(userId);

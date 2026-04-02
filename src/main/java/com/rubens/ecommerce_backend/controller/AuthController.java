@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.RegisterRequest;
 import com.rubens.ecommerce_backend.dto.UserDTO;
+import com.rubens.ecommerce_backend.exception.InvalidCredentialsException;
 import com.rubens.ecommerce_backend.model.AuthResponse;
 import com.rubens.ecommerce_backend.model.LoginRequest;
 import com.rubens.ecommerce_backend.model.User;
@@ -42,48 +43,42 @@ public class AuthController {
         String token = jwtService.generateToken(user);
 
         return ResponseEntity.ok(
-                new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
+            new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
         );
     }
 
     // Funcionando
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        try {
-            User user = new User();
-            user.setName(request.name());
-            user.setEmail(request.email());
-            user.setPassword(request.password());
 
-            UserDTO savedUserDTO = userService.registerUser(user, "system");
+        User user = new User();
+        user.setName(request.name());
+        user.setEmail(request.email());
+        user.setPassword(request.password());
 
-            String token = jwtService.generateToken(user); // usa User
-            
-            webSocketService.notify(savedUserDTO.id(), Map.of(
-                    "type", "USER_CREATED",
-                    "user", savedUserDTO
-            ));
+        UserDTO savedUserDTO = userService.registerUser(user, "system");
 
-            return ResponseEntity.ok(
-                new AuthResponse(token, savedUserDTO.id(), savedUserDTO.email(), savedUserDTO.name())
-            );
+        String token = jwtService.generateToken(user);
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                new AuthResponse(null, null, null, e.getMessage())
-            );
-        }
+        webSocketService.notify(savedUserDTO.id(), Map.of(
+                "type", "USER_CREATED",
+                "user", savedUserDTO
+        ));
+
+        return ResponseEntity.ok(
+            new AuthResponse(token, savedUserDTO.id(), savedUserDTO.email(), savedUserDTO.name())
+        );
     }
 
     // Funcionando
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
 
         var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos."));
+                .orElseThrow(InvalidCredentialsException::new);
 
         if (!userService.passwordMatches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha inválida");
+            throw new InvalidCredentialsException();
         }
 
         String token = jwtService.generateToken(user);
@@ -91,8 +86,7 @@ public class AuthController {
         userService.logUserLogin(user.getId());
 
         return ResponseEntity.ok(
-                new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
+            new AuthResponse(token, user.getId(), user.getEmail(), user.getName())
         );
     }
-
 }

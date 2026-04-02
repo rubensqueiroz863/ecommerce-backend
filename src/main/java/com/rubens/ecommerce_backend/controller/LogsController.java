@@ -3,17 +3,16 @@ package com.rubens.ecommerce_backend.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.rubens.ecommerce_backend.exception.InvalidLimitException;
+import com.rubens.ecommerce_backend.exception.InvalidPageException;
 import com.rubens.ecommerce_backend.model.EventActivityLog;
 import com.rubens.ecommerce_backend.model.ProductActivityLog;
 import com.rubens.ecommerce_backend.model.SearchActivityLog;
 import com.rubens.ecommerce_backend.model.UserActivityLog;
-import com.rubens.ecommerce_backend.repository.EventActivityLogRepository;
-import com.rubens.ecommerce_backend.repository.ProductActivityLogRepository;
-import com.rubens.ecommerce_backend.repository.SearchActivityLogRepository;
-import com.rubens.ecommerce_backend.repository.UserActivityLogRepository;
+import com.rubens.ecommerce_backend.service.LogsService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,48 +21,57 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LogsController {
 
-    private final UserActivityLogRepository userActivityLogRepository;
-    private final ProductActivityLogRepository productActivityLogRepository;
-    private final EventActivityLogRepository eventActivityLogRepository;
-    private final SearchActivityLogRepository searchActivityLogRepository;
+    private final LogsService logsService;
 
-    // Funcionando
+    private Pageable buildPageable(int page, int size) {
+        if (page < 0) {
+            throw new InvalidPageException("Page must be >= 0");
+        }
+
+        if (size <= 0 || size > 100) {
+            throw new InvalidLimitException("Size must be between 1 and 100");
+        }
+
+        return PageRequest.of(page, size);
+    }
+
     @GetMapping("/users")
-    public Page<UserActivityLog> getAllUsersLogs(
-        @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+    public ResponseEntity<Page<UserActivityLog>> getAllUsersLogs(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return userActivityLogRepository.findAllByOrderByTimestampDesc(pageable);
+        return ResponseEntity.ok(
+            logsService.getUserLogs(buildPageable(page, size))
+        );
     }
 
-    // Funcionando
     @GetMapping("/products")
-    public Page<ProductActivityLog> getAllProductsLogs(
-        @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+    public ResponseEntity<Page<ProductActivityLog>> getAllProductsLogs(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productActivityLogRepository.findAllByOrderByTimestampDesc(pageable);
+        return ResponseEntity.ok(
+            logsService.getProductLogs(buildPageable(page, size))
+        );
     }
 
-    // Funcionando
     @GetMapping("/events")
-    public Page<EventActivityLog> getAllEventsLogs(
-        @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+    public ResponseEntity<Page<EventActivityLog>> getAllEventsLogs(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return eventActivityLogRepository.findAllByOrderByTimestampDesc(pageable);
+        return ResponseEntity.ok(
+            logsService.getEventLogs(buildPageable(page, size))
+        );
     }
 
-    // Funcionando
-    @GetMapping("/searchs")
-    public Page<SearchActivityLog> getAllSearchsLogs(
-        @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+    @GetMapping("/searches")
+    public ResponseEntity<Page<SearchActivityLog>> getAllSearchLogs(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return searchActivityLogRepository.findAllByOrderByTimestampDesc(pageable);
+        return ResponseEntity.ok(
+            logsService.getSearchLogs(buildPageable(page, size))
+        );
     }
 }

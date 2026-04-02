@@ -9,6 +9,7 @@ import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
 import com.rubens.ecommerce_backend.service.ProductService;
 import com.rubens.ecommerce_backend.service.WebSocketService;
+import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +21,6 @@ public class ProductController {
     private final ProductService productService;
     private final WebSocketService webSocketService;
 
-    // Funcionando
     @GetMapping
     public PageResponse<ProductDTO> findAllByName(
         @RequestParam(name = "name", required = false) String name,
@@ -31,53 +31,78 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductDTO findById(@PathVariable("id") String id) {
+    public ProductDTO findById(@PathVariable String id) {
         return productService.findById(id);
     }
 
-    // Funcionando
     @GetMapping("/subcategory/{slug}")
-    public PageResponse<ProductDTO> findAllBySlug(
-        @PathVariable("slug") String slug,
-        @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size) {
+    public PageResponse<ProductDTO> findAllBySubCategory(
+        @PathVariable String slug,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
         return productService.findBySubCategorySlug(slug, page, size);
     }
 
-    // Funcionando
+    @GetMapping("/category/{slug}")
+    public PageResponse<ProductDTO> findAllByCategory(
+        @PathVariable String slug,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        return productService.findByCategorySlug(slug, page, size);
+    }
+
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ProductDTO createProduct(@RequestBody ProductRequestDTO dto) {
+
         ProductDTO savedProduct = productService.createProduct(dto, "system");
-        
-        webSocketService.notify(savedProduct.id(), Map.of(
-                "type", "PRODUCT_CREATED",
-                "product", savedProduct
-        ));
-        
+
+        try {
+            webSocketService.notify(savedProduct.id(), Map.of(
+                    "type", "PRODUCT_CREATED",
+                    "product", savedProduct
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao notificar websocket: " + e.getMessage());
+        }
+
         return savedProduct;
     }
 
-    // Funcionando
     @PatchMapping("/{id}")
-    public ProductDTO updateProduct(@PathVariable("id") String id, @RequestBody ProductRequestDTO dto    ) {
+    public ProductDTO updateProduct(
+        @PathVariable String id,
+        @RequestBody ProductRequestDTO dto
+    ) {
         ProductDTO updatedProduct = productService.updateProduct(id, dto, "system");
-        
-        webSocketService.notify(updatedProduct.id(), Map.of(
-                "type", "PRODUCT_UPDATED",
-                "product", updatedProduct
-        ));
+
+        try {
+            webSocketService.notify(updatedProduct.id(), Map.of(
+                    "type", "PRODUCT_UPDATED",
+                    "product", updatedProduct
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao notificar websocket: " + e.getMessage());
+        }
 
         return updatedProduct;
     }
 
-    // Funcionando
     @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable("id") String id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(@PathVariable String id) {
+
         productService.deleteProduct(id, "system");
 
-        webSocketService.notify(id, Map.of(
-                "type", "PRODUCT_DELETED",
-                "productId", id
-        ));
+        try {
+            webSocketService.notify(id, Map.of(
+                    "type", "PRODUCT_DELETED",
+                    "productId", id
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao notificar websocket: " + e.getMessage());
+        }
     }
 }

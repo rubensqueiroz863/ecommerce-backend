@@ -1,13 +1,24 @@
 package com.rubens.ecommerce_backend.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
+import com.rubens.ecommerce_backend.exception.InvalidCategoryException;
+import com.rubens.ecommerce_backend.exception.InvalidLimitException;
+import com.rubens.ecommerce_backend.exception.InvalidPageException;
+import com.rubens.ecommerce_backend.exception.InvalidProductIdException;
+import com.rubens.ecommerce_backend.exception.InvalidProductNameException;
+import com.rubens.ecommerce_backend.exception.InvalidProductPriceException;
+import com.rubens.ecommerce_backend.exception.InvalidSubCategoryException;
+import com.rubens.ecommerce_backend.exception.ProductCreationException;
+import com.rubens.ecommerce_backend.exception.ProductDeletionException;
+import com.rubens.ecommerce_backend.exception.ProductNotFoundException;
+import com.rubens.ecommerce_backend.exception.ProductUpdateException;
+import com.rubens.ecommerce_backend.exception.SubCategoryNotFoundException;
 import com.rubens.ecommerce_backend.model.Product;
 import com.rubens.ecommerce_backend.model.ProductActivityLog;
 import com.rubens.ecommerce_backend.model.SubCategory;
@@ -19,6 +30,7 @@ import com.rubens.ecommerce_backend.repository.SubCategoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
@@ -31,97 +43,123 @@ public class ProductService {
     private final ClickEventRepository clickEventRepository;
     private final ProductActivityLogRepository productActivityLogRepository;
 
-    public ProductDTO createProduct(ProductRequestDTO productDTO, String performedBy) {
+    // 🔹 CREATE
+    public ProductDTO createProduct(ProductRequestDTO dto, String performedBy) {
 
-        SubCategory subCategory = subCategoryRepository
-                .findById(productDTO.subCategory())
-                .orElseThrow(() -> new RuntimeException("SubCategory not found"));
-
-        Product product = new Product();
-        product.setName(productDTO.name());
-        product.setPrice(productDTO.price());
-        product.setPhoto(productDTO.photo());
-        product.setSubCategory(subCategory);
-
-        Product savedProduct = productRepository.save(product);
-
-        productActivityLogRepository.save(ProductActivityLog.builder()
-                .productId(savedProduct.getId())
-                .performedBy(performedBy)
-                .action("CREATE")
-                .details("Producto criado: " + savedProduct.getId())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
-
-        return new ProductDTO(
-                savedProduct.getId(),
-                savedProduct.getName(),
-                savedProduct.getPrice(),
-                savedProduct.getPhoto(),
-                savedProduct.getSubCategory().getId()
-        );
-    }
-
-    public PageResponse<ProductDTO> findAllByName(
-        String name,
-        int page,
-        int size
-    ) {
-        if (name == null || name.isBlank()) {
-            return new PageResponse<>(List.of(), false);
+        if (dto.name() == null || dto.name().isBlank()) {
+            throw new InvalidProductNameException();
         }
 
-        Page<Product> result =
-            productRepository.findByNameContainingIgnoreCase(
+        if (dto.price() == null || dto.price() <= 0) {
+            throw new InvalidProductPriceException();
+        }
+
+        if (dto.subCategory() == null || dto.subCategory().isBlank()) {
+            throw new SubCategoryNotFoundException();
+        }
+
+        SubCategory subCategory = subCategoryRepository
+                .findById(dto.subCategory())
+                .orElseThrow(SubCategoryNotFoundException::new);
+
+        Product product = new Product();
+        product.setName(dto.name());
+        product.setPrice(dto.price());
+        product.setPhoto(dto.photo());
+        product.setSubCategory(subCategory);
+
+        Product saved;
+
+        try {
+            saved = productRepository.save(product);
+        } catch (DataIntegrityViolationException e) {
+            throw new ProductCreationException("Erro ao salvar produto.");
+        }
+
+        try {
+            productActivityLogRepository.save(ProductActivityLog.builder()
+                    .productId(saved.getId())
+                    .performedBy(performedBy)
+                    .action("CREATE")
+                    .details("Produto criado: " + saved.getId())
+                    .timestamp(LocalDateTime.now())
+                    .build()
+            );
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar log: " + e.getMessage());
+        }
+
+        return toDTO(saved);
+    }
+
+    // 🔹 SEARCH BY NAME
+    public PageResponse<ProductDTO> findAllByName(String name, int page, int size) {
+
+        if (name == null || name.isBlank()) {
+            throw new InvalidProductNameException();
+        }
+
+        Page<Product> result = productRepository.findByNameContainingIgnoreCase(
                 name,
-                PageRequest.of(page, size)
-            );
+                buildPageRequest(page, size)
+        );
 
         return toPageResponse(result);
     }
 
-    public PageResponse<ProductDTO> findBySubCategorySlug(
-        String slug,
-        int page,
-        int size
-    ) {
-        Page<Product> result =
-            productRepository.findBySubCategory_Slug(
+    // 🔹 BY SUBCATEGORY
+    public PageResponse<ProductDTO> findBySubCategorySlug(String slug, int page, int size) {
+
+        if (slug == null || slug.isBlank()) {
+            throw new InvalidSubCategoryException();
+        }
+
+        Page<Product> result = productRepository.findBySubCategory_Slug(
                 slug,
-                PageRequest.of(page, size)
-            );
+                buildPageRequest(page, size)
+        );
 
         return toPageResponse(result);
     }
 
-    public PageResponse<ProductDTO> findByCategorySlug(
-        String slug,
-        int page,
-        int size
-    ) {
-        Page<Product> result =
-            productRepository.findBySubCategory_Category_Slug(
+    // 🔹 BY CATEGORY
+    public PageResponse<ProductDTO> findByCategorySlug(String slug, int page, int size) {
+
+        if (slug == null || slug.isBlank()) {
+            throw new InvalidCategoryException();
+        }
+
+        Page<Product> result = productRepository.findBySubCategory_Category_Slug(
                 slug,
-                PageRequest.of(page, size)
-            );
+                buildPageRequest(page, size)
+        );
 
         return toPageResponse(result);
     }
 
+    // 🔹 FIND BY ID
     public ProductDTO findById(String id) {
+
+        if (id == null || id.isBlank()) {
+            throw new InvalidProductIdException();
+        }
+
         Product product = productRepository.findById(id)
-            .orElseThrow(() ->
-                new RuntimeException("Produto não encontrado")
-            );
+                .orElseThrow(ProductNotFoundException::new);
+
         return toDTO(product);
     }
 
+    // 🔹 UPDATE
     public ProductDTO updateProduct(String id, ProductRequestDTO dto, String performedBy) {
 
+        if (id == null || id.isBlank()) {
+            throw new InvalidProductIdException();
+        }
+
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
-        
+                .orElseThrow(ProductNotFoundException::new);
+
         StringBuilder details = new StringBuilder();
 
         if (dto.name() != null && !dto.name().isBlank()) {
@@ -130,6 +168,9 @@ public class ProductService {
         }
 
         if (dto.price() != null) {
+            if (dto.price() <= 0) {
+                throw new InvalidProductPriceException();
+            }
             details.append("Preço: ").append(product.getPrice()).append(" -> ").append(dto.price()).append("; ");
             product.setPrice(dto.price());
         }
@@ -141,61 +182,101 @@ public class ProductService {
 
         if (dto.subCategory() != null && !dto.subCategory().isBlank()) {
             SubCategory subCategory = subCategoryRepository
-                .findById(dto.subCategory())
-                .orElseThrow(() -> new RuntimeException("SubCategory not found"));
-            details.append("Preço: ").append(product.getSubCategory().getName()).append(" -> ").append(dto.subCategory()).append("; ");
+                    .findById(dto.subCategory())
+                    .orElseThrow(SubCategoryNotFoundException::new);
+
+            details.append("SubCategory: ")
+                    .append(product.getSubCategory().getName())
+                    .append(" -> ")
+                    .append(subCategory.getName())
+                    .append("; ");
+
             product.setSubCategory(subCategory);
         }
 
-        Product updatedProduct = productRepository.save(product);
+        Product updated;
 
-        productActivityLogRepository.save(ProductActivityLog.builder()
-                .productId(updatedProduct.getId())
-                .performedBy(performedBy)
-                .action("UPDATE")
-                .details(details.toString())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+        try {
+            updated = productRepository.save(product);
+        } catch (DataIntegrityViolationException e) {
+            throw new ProductUpdateException("Product could not be updated.");
+        }
 
-        return toDTO(updatedProduct);
+        try {
+            productActivityLogRepository.save(ProductActivityLog.builder()
+                    .productId(updated.getId())
+                    .performedBy(performedBy)
+                    .action("UPDATE")
+                    .details(details.toString())
+                    .timestamp(LocalDateTime.now())
+                    .build()
+            );
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar log: " + e.getMessage());
+        }
+
+        return toDTO(updated);
     }
 
     @Transactional
     public void deleteProduct(String id, String performedBy) {
-        clickEventRepository.deleteByProductId(id);
+
+        if (id == null || id.isBlank()) {
+            throw new InvalidProductIdException();
+        }
 
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
-        productRepository.delete(product);
+                .orElseThrow(ProductNotFoundException::new);
 
-        productActivityLogRepository.save(ProductActivityLog.builder()
-                .productId(product.getId())
-                .performedBy(performedBy)
-                .action("DELETE")
-                .details("Produto deletado: " + product.getName() + ", preço: " + product.getPrice() + ", subcategory: " + product.getSubCategory().getName())
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+        try {
+            clickEventRepository.deleteByProductId(id);
+            productRepository.delete(product);
+        } catch (DataIntegrityViolationException e) {
+            throw new ProductDeletionException("Erro ao deletar produto.");
+        }
+
+        try {
+            productActivityLogRepository.save(ProductActivityLog.builder()
+                    .productId(product.getId())
+                    .performedBy(performedBy)
+                    .action("DELETE")
+                    .details("Produto deletado: " + product.getName()
+                            + ", preço: " + product.getPrice()
+                            + ", subcategory: " + product.getSubCategory().getName())
+                    .timestamp(LocalDateTime.now())
+                    .build()
+            );
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar log: " + e.getMessage());
+        }
+    }
+
+    private PageRequest buildPageRequest(int page, int size) {
+        if (page < 0) {
+            throw new InvalidPageException();
+        }
+
+        if (size <= 0 || size > 100) {
+            throw new InvalidLimitException();
+        }
+
+        return PageRequest.of(page, size);
     }
 
     private PageResponse<ProductDTO> toPageResponse(Page<Product> page) {
         return new PageResponse<>(
-            page.getContent()
-                .stream()
-                .map(this::toDTO)
-                .toList(),
-            page.hasNext()
+                page.getContent().stream().map(this::toDTO).toList(),
+                page.hasNext()
         );
     }
 
     private ProductDTO toDTO(Product product) {
         return new ProductDTO(
-            product.getId(),
-            product.getName(),
-            product.getPrice(),
-            product.getPhoto(),
-            product.getSubCategory().getName()
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getPhoto(),
+                product.getSubCategory().getName()
         );
     }
 }
