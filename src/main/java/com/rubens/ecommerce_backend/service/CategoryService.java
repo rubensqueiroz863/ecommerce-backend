@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.rubens.ecommerce_backend.dto.CategoryDTO;
+import com.rubens.ecommerce_backend.exception.CategoryFetchException;
 import com.rubens.ecommerce_backend.model.Category;
 import com.rubens.ecommerce_backend.repository.CategoryRepository;
 
@@ -17,10 +18,18 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public List<CategoryDTO> findAll() {
-        return categoryRepository.findAll()
-            .stream()
-            .map(this::toDTO)
-            .toList();
+
+        List<Category> categories;
+
+        try {
+            categories = categoryRepository.findAll();
+        } catch (Exception e) {
+            throw new CategoryFetchException("Categories could not be fetched.");
+        }
+
+        return categories.stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     private CategoryDTO toDTO(Category category) {

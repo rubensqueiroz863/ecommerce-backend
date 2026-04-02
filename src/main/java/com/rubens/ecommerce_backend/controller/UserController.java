@@ -3,6 +3,8 @@ package com.rubens.ecommerce_backend.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
@@ -22,15 +24,21 @@ public class UserController {
 
     // Funcionando
     @PostMapping
-    public UserDTO registerUser(@RequestBody User user) {
+    // @PreAuthorize("hasRole('ADMIN')") imḉementação futura
+    public ResponseEntity<UserDTO> registerUser(@RequestBody User user) {
+
         UserDTO created = userService.registerUserAdmin(user, "system");
 
-        webSocketService.notify(created.id(), Map.of(
-                "type", "USER_CREATED",
-                "user", created
-        ));
+        try {
+            webSocketService.notify(created.id(), Map.of(
+                    "type", "USER_CREATED",
+                    "user", created
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar websocket: " + e.getMessage());
+        }
 
-        return created;
+        return ResponseEntity.status(201).body(created);
     }
 
     // Funcionando
@@ -54,34 +62,45 @@ public class UserController {
 
     // Funcionando
     @GetMapping("/{id}")
-    public UserDTO getUser(@PathVariable("id") String id) {
-        return userService.getUser(id);
+    public ResponseEntity<UserDTO> getUser(@PathVariable("id") String id) {
+        return ResponseEntity.ok(userService.getUser(id));
     }
 
     // Funcionando
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable("id") String id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") String id) {
+
         userService.deleteUser(id, "system");
 
-        webSocketService.notify(id, Map.of(
-                "type", "USER_DELETED",
-                "userId", id
-        ));
+        try {
+            webSocketService.notify(id, Map.of(
+                    "type", "USER_DELETED",
+                    "userId", id
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar websocket: " + e.getMessage());
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
     // Funcionando
     @PatchMapping("/{id}")
-    public UserDTO updateUser(
+    public ResponseEntity<UserDTO> updateUser(
         @PathVariable("id") String id,
         @RequestBody UserDTO dto
     ) {
         UserDTO updatedUser = userService.updateUser(id, dto, "system");
 
-        webSocketService.notify(updatedUser.id(), Map.of(
-                "type", "USER_UPDATED",
-                "user", updatedUser
-        ));
+        try {
+            webSocketService.notify(updatedUser.id(), Map.of(
+                    "type", "USER_UPDATED",
+                    "user", updatedUser
+            ));
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar websocket: " + e.getMessage());
+        }
 
-        return updatedUser;
-    }
+        return ResponseEntity.ok(updatedUser);
+}
 }
