@@ -18,6 +18,8 @@ public class Product {
 
     private Double price;
     private String photo;
+    private String stripeProductId;
+    private String stripePriceId;
 
     @ManyToOne
     @JoinColumn(name = "subcategory_id", nullable = false)

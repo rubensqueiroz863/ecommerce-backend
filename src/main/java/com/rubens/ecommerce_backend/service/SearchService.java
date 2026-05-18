@@ -47,7 +47,6 @@ public class SearchService {
 
     public SearchDTO createSearch(String query, String email, String performedBy) {
 
-        // 🔹 validação de entrada
         if (query == null || query.isBlank()) {
             throw new InvalidSearchQueryException("Query cannot be empty.");
         }

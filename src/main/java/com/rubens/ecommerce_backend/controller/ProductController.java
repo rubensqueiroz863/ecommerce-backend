@@ -46,7 +46,7 @@ public class ProductController {
 
     @GetMapping("/category/{slug}")
     public PageResponse<ProductDTO> findAllByCategory(
-        @PathVariable String slug,
+        @PathVariable("slug") String slug,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
@@ -73,7 +73,7 @@ public class ProductController {
 
     @PatchMapping("/{id}")
     public ProductDTO updateProduct(
-        @PathVariable String id,
+        @PathVariable("id") String id,
         @RequestBody ProductRequestDTO dto
     ) {
         ProductDTO updatedProduct = productService.updateProduct(id, dto, "system");
@@ -92,7 +92,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteProduct(@PathVariable String id) {
+    public void deleteProduct(@PathVariable("id") String id) {
 
         productService.deleteProduct(id, "system");
 

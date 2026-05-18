@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.rubens.ecommerce_backend.dto.PageResponse;
 import com.rubens.ecommerce_backend.dto.ProductDTO;
 import com.rubens.ecommerce_backend.dto.ProductRequestDTO;
+import com.rubens.ecommerce_backend.dto.StripeProductResponse;
 import com.rubens.ecommerce_backend.exception.InvalidCategoryException;
 import com.rubens.ecommerce_backend.exception.InvalidLimitException;
 import com.rubens.ecommerce_backend.exception.InvalidPageException;
@@ -42,8 +43,8 @@ public class ProductService {
     private final SubCategoryRepository subCategoryRepository;
     private final ClickEventRepository clickEventRepository;
     private final ProductActivityLogRepository productActivityLogRepository;
+    private final StripeService stripeService;
 
-    // 🔹 CREATE
     public ProductDTO createProduct(ProductRequestDTO dto, String performedBy) {
 
         if (dto.name() == null || dto.name().isBlank()) {
@@ -68,6 +69,23 @@ public class ProductService {
         product.setPhoto(dto.photo());
         product.setSubCategory(subCategory);
 
+        StripeProductResponse stripeData;
+
+        try {
+            Long priceInCents = Math.round(dto.price() * 100);
+
+            stripeData = stripeService.createProduct(
+                    dto.name(),
+                    priceInCents
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ProductCreationException("Erro ao criar produto no Stripe.");
+        }
+
+        product.setStripeProductId(stripeData.productId());
+        product.setStripePriceId(stripeData.priceId());
+
         Product saved;
 
         try {
@@ -81,7 +99,8 @@ public class ProductService {
                     .productId(saved.getId())
                     .performedBy(performedBy)
                     .action("CREATE")
-                    .details("Produto criado: " + saved.getId())
+                    .details("Produto criado: " + saved.getId()
+                            + " | StripeId: " + saved.getStripeProductId())
                     .timestamp(LocalDateTime.now())
                     .build()
             );
@@ -92,7 +111,6 @@ public class ProductService {
         return toDTO(saved);
     }
 
-    // 🔹 SEARCH BY NAME
     public PageResponse<ProductDTO> findAllByName(String name, int page, int size) {
 
         if (name == null || name.isBlank()) {
@@ -107,7 +125,6 @@ public class ProductService {
         return toPageResponse(result);
     }
 
-    // 🔹 BY SUBCATEGORY
     public PageResponse<ProductDTO> findBySubCategorySlug(String slug, int page, int size) {
 
         if (slug == null || slug.isBlank()) {
@@ -122,7 +139,6 @@ public class ProductService {
         return toPageResponse(result);
     }
 
-    // 🔹 BY CATEGORY
     public PageResponse<ProductDTO> findByCategorySlug(String slug, int page, int size) {
 
         if (slug == null || slug.isBlank()) {
@@ -137,7 +153,6 @@ public class ProductService {
         return toPageResponse(result);
     }
 
-    // 🔹 FIND BY ID
     public ProductDTO findById(String id) {
 
         if (id == null || id.isBlank()) {
@@ -150,7 +165,6 @@ public class ProductService {
         return toDTO(product);
     }
 
-    // 🔹 UPDATE
     public ProductDTO updateProduct(String id, ProductRequestDTO dto, String performedBy) {
 
         if (id == null || id.isBlank()) {
@@ -163,7 +177,23 @@ public class ProductService {
         StringBuilder details = new StringBuilder();
 
         if (dto.name() != null && !dto.name().isBlank()) {
-            details.append("Nome: ").append(product.getName()).append(" -> ").append(dto.name()).append("; ");
+
+            try {
+                stripeService.updateProductName(
+                        product.getStripeProductId(),
+                        dto.name()
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ProductUpdateException("Erro ao atualizar nome no Stripe.");
+            }
+
+            details.append("Nome: ")
+                    .append(product.getName())
+                    .append(" -> ")
+                    .append(dto.name())
+                    .append("; ");
+
             product.setName(dto.name());
         }
 
@@ -171,7 +201,35 @@ public class ProductService {
             if (dto.price() <= 0) {
                 throw new InvalidProductPriceException();
             }
-            details.append("Preço: ").append(product.getPrice()).append(" -> ").append(dto.price()).append("; ");
+
+            try {
+                Long priceInCents = Math.round(dto.price() * 100);
+                if (product.getStripeProductId() == null || product.getStripeProductId().isBlank()) {
+                    throw new ProductUpdateException("Produto não está sincronizado com Stripe.");
+                }
+                String newPriceId = stripeService.createNewPrice(
+                        product.getStripeProductId(),
+                        priceInCents
+                );
+
+                stripeService.updateDefaultPrice(
+                        product.getStripeProductId(),
+                        newPriceId
+                );
+
+                product.setStripePriceId(newPriceId);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ProductUpdateException("Erro ao atualizar preço no Stripe: " + e.getMessage());
+            }
+
+            details.append("Preço: ")
+                    .append(product.getPrice())
+                    .append(" -> ")
+                    .append(dto.price())
+                    .append("; ");
+
             product.setPrice(dto.price());
         }
 
