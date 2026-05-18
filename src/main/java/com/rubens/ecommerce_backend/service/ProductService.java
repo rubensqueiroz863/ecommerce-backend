@@ -287,6 +287,16 @@ public class ProductService {
                 .orElseThrow(ProductNotFoundException::new);
 
         try {
+            stripeService.archiveProductAndPrice(
+                    product.getStripeProductId(),
+                    product.getStripePriceId()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ProductDeletionException("Erro ao arquivar produto no Stripe.");
+        }
+
+        try {
             clickEventRepository.deleteByProductId(id);
             productRepository.delete(product);
         } catch (DataIntegrityViolationException e) {
@@ -300,7 +310,9 @@ public class ProductService {
                     .action("DELETE")
                     .details("Produto deletado: " + product.getName()
                             + ", preço: " + product.getPrice()
-                            + ", subcategory: " + product.getSubCategory().getName())
+                            + ", subcategory: " + product.getSubCategory().getName()
+                            + ", stripeProductId: " + product.getStripeProductId()
+                            + ", stripePriceId: " + product.getStripePriceId())
                     .timestamp(LocalDateTime.now())
                     .build()
             );

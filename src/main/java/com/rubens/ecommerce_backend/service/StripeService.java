@@ -10,6 +10,8 @@ import com.stripe.param.PriceCreateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
 import com.rubens.ecommerce_backend.dto.StripeProductResponse;
+import com.stripe.model.Price;
+import com.stripe.param.PriceUpdateParams;
 
 @Service
 public class StripeService {
@@ -82,4 +84,30 @@ public class StripeService {
 
         product.update(params);
     }
+
+    public void archiveProductAndPrice(String productId, String priceId) throws Exception {
+        Stripe.apiKey = stripeKey;
+
+        if (priceId != null && !priceId.isBlank()) {
+                Price price = Price.retrieve(priceId);
+
+                PriceUpdateParams priceParams =
+                        PriceUpdateParams.builder()
+                                .setActive(false)
+                                .build();
+
+                price.update(priceParams);
+        }
+
+        if (productId != null && !productId.isBlank()) {
+                Product product = Product.retrieve(productId);
+
+                ProductUpdateParams productParams =
+                        ProductUpdateParams.builder()
+                                .setActive(false)
+                                .build();
+
+                product.update(productParams);
+        }
+        }
 }
