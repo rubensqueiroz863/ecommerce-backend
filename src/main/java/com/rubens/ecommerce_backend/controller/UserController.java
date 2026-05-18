@@ -1,10 +1,8 @@
 package com.rubens.ecommerce_backend.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.rubens.ecommerce_backend.dto.PageResponse;
@@ -24,7 +22,7 @@ public class UserController {
 
     // Funcionando
     @PostMapping
-    // @PreAuthorize("hasRole('ADMIN')") imḉementação futura
+    // @PreAuthorize("hasRole('ADMIN')") implementação futura
     public ResponseEntity<UserDTO> registerUser(@RequestBody User user) {
 
         UserDTO created = userService.registerUserAdmin(user, "system");
@@ -84,7 +82,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // Funcionando
     @PatchMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
         @PathVariable("id") String id,
@@ -102,5 +99,5 @@ public class UserController {
         }
 
         return ResponseEntity.ok(updatedUser);
-}
+    }
 }
